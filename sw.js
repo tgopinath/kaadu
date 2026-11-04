@@ -1,5 +1,5 @@
 // App shell works offline; iNaturalist photos are cached as they are seen.
-const SHELL = 'kd-shell-v1', IMG = 'kd-img-v1';
+const SHELL = 'kd-shell-v2', IMG = 'kd-img-v1';
 const FILES = ['./', 'index.html', 'kolam/tokens.css', 'kolam/kolam.css', 'styles.css', 'app.js', 'data.js', 'data-ta.js', 'ids.js', 'i18n.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys()
