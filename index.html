@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Kaadu · every kind of plant</title>
+  <meta name="description" content="A field guide to every kind of plant — trees, shrubs, vines, herbs, grasses, ferns, succulents, water plants, mosses and palms — with real photos, in English and Tamil." />
+  <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#10131b" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Kaadu" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://api.inaturalist.org" />
+  <link rel="stylesheet" href="kolam/tokens.css" />
+  <link rel="stylesheet" href="kolam/kolam.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Line icons (24px grid, 2px stroke), drawn for Kaadu. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15z"/><path d="M5 19 13 11"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-6-4-6 4z"/></symbol>
+      <symbol id="i-bookmark-on" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-6-4-6 4z" fill="currentColor"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+      <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M12 3v18M8 3h8M8 21h8"/><path d="M12 7h3M12 11h2M12 15h3"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></symbol>
+      <symbol id="i-family" viewBox="0 0 24 24"><path d="M12 21v-7M12 14 6 8M12 14l6-6M6 8V4M18 8V4M12 10V4"/></symbol>
+      <symbol id="i-hand" viewBox="0 0 24 24"><path d="M7 12V5.5a1.5 1.5 0 0 1 3 0V11M10 10V4a1.5 1.5 0 0 1 3 0v6M13 10V5a1.5 1.5 0 0 1 3 0v6M16 10.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.7L3.5 14a1.5 1.5 0 0 1 2.4-1.8L7 13.5"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5c-3.5-.5-6.5 0-8.5 1.5zM12 6.5v13"/></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <!-- growth forms -->
+      <symbol id="f-tree" viewBox="0 0 24 24"><path d="M12 21v-7"/><path d="M7.5 14a4.5 4.5 0 0 1-.9-8.9A5.5 5.5 0 0 1 17.4 5.1 4.5 4.5 0 0 1 16.5 14z"/></symbol>
+      <symbol id="f-shrub" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6.5 20a4 4 0 0 1-.5-7.9 5 5 0 0 1 9.6-2A4.5 4.5 0 0 1 18 20"/><path d="M12 20v-5M9 20l1.5-3M15 20l-1.5-3"/></symbol>
+      <symbol id="f-vine" viewBox="0 0 24 24"><path d="M6 21V3"/><path d="M6 6c3 0 6 1 6 4s-6 2-6 5 3 3 6 3"/><path d="M12 10c2-1 4-1 5 1-1.5 1-3.5 1-5-1zM12 18c2-1 4-1 5 1-1.5 1-3.5 1-5-1z"/></symbol>
+      <symbol id="f-herb" viewBox="0 0 24 24"><path d="M12 21v-9"/><path d="M12 15c-4 0-6-2-6.5-5 3.5 0 6 1.5 6.5 5zM12 12c0-3.5 2-6 5.5-6.5 0 3.5-2 6-5.5 6.5z"/><path d="M8 21h8"/></symbol>
+      <symbol id="f-grass" viewBox="0 0 24 24"><path d="M4 21c1-5 2-9 1-15M9 21c0-6 1-10 4-15M14 21c0-4 1-8 5-12M19 21c-.5-3-1-5-3-7"/></symbol>
+      <symbol id="f-fern" viewBox="0 0 24 24"><path d="M6 21c0-9 4-15 12-17"/><path d="M8 15l-3-2M9 12 6 9M11 9 9 5.5M8.5 16.5l3 .5M10 13l3.5 0M12.5 9.5l3-.5"/></symbol>
+      <symbol id="f-succulent" viewBox="0 0 24 24"><path d="M12 19c-1.5-3-1.5-6 0-9 1.5 3 1.5 6 0 9z"/><path d="M12 19c-3-1-5-3.5-6-7 3 .5 5 2.5 6 7zM12 19c3-1 5-3.5 6-7-3 .5-5 2.5-6 7z"/><path d="M5 19h14l-1.5 3h-11z"/></symbol>
+      <symbol id="f-aquatic" viewBox="0 0 24 24"><path d="M2 17c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M2 21c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"/><path d="M12 13c-2.5-1.5-3.5-4-3-7 1.5.5 2.5 1.5 3 3 .5-1.5 1.5-2.5 3-3 .5 3-.5 5.5-3 7z"/></symbol>
+      <symbol id="f-moss" viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M5 20v-3M7 20v-5M9 20v-3M11 20v-6M13 20v-4M15 20v-5M17 20v-3M19 20v-4"/><circle cx="7" cy="13.5" r="1"/><circle cx="11" cy="12.5" r="1"/><circle cx="15" cy="13.5" r="1"/></symbol>
+      <symbol id="f-palm" viewBox="0 0 24 24"><path d="M12 21c0-5 .5-9 0-12"/><path d="M12 9C10 6 7 5 3.5 6M12 9c2-3 5-4 8.5-3M12 9c-3 0-5.5 1.5-7 4.5M12 9c3 0 5.5 1.5 7 4.5M12 9c0-2.5-1-4.5-2.5-6"/></symbol>
+      <symbol id="f-conifer" viewBox="0 0 24 24"><path d="M12 3 7 10h3l-4 5h4l-4.5 5h13L14 15h4l-4-5h3z"/><path d="M12 20v2"/></symbol>
+      <symbol id="f-flower" viewBox="0 0 24 24"><circle cx="12" cy="9" r="2"/><path d="M12 7c-1-3 2-3 0-5M12 7c0-2.5 3-3.5 4-1.5S14 9 14 9M14 9c2.5-.5 4 1.5 2.5 3S12 11 12 11M12 11c-1 2.5-3.5 2.5-3.5.5S10 9 10 9M10 9c-2.5 0-3-2.5-1-3.5S12 7 12 7"/><path d="M12 11v10M12 17c-2 0-3.5-1-4-3 2 0 3.5 1 4 3z"/></symbol>
+      <symbol id="f-all" viewBox="0 0 24 24"><path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15z"/><path d="M5 19 13 11"/></symbol>
+    </defs>
+  </svg>
+
+  <a class="skip" href="#app">Skip to content</a>
+  <header class="top">
+    <div class="top-inner">
+      <a class="brand" href="#/" aria-label="Kaadu, home">
+        <img src="icon.svg" alt="" width="32" height="32" />
+        <span class="brand-name">Kaadu</span><span class="brand-ta" lang="ta">காடு</span>
+      </a>
+      <nav class="topnav" aria-label="Main">
+        <a href="#/" data-tab="home" data-t="nav_home">Discover</a>
+        <a href="#/types" data-tab="types" data-t="nav_groups">Plant types</a>
+        <a href="#/saved" data-tab="saved" data-t="nav_saved">Saved</a>
+      </nav>
+      <form class="search" id="searchForm" role="search" autocomplete="off">
+        <svg class="k-icon" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="searchInput" type="search" placeholder="Search any plant: neem, lotus, Ficus…" aria-label="Search plants" data-t-ph="search_ph" data-t-label="search_label" enterkeyhint="search" />
+      </form>
+      <button class="langswitch" id="langBtn" type="button" role="switch" aria-checked="false" aria-label="Language: English or Tamil">
+        <span class="opt" data-l="en">English</span><span class="opt" data-l="ta" lang="ta">தமிழ்</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <nav class="tabbar" aria-label="Main">
+    <a href="#/" data-tab="home"><svg class="k-icon" aria-hidden="true"><use href="#i-home"/></svg><span data-t="nav_home">Discover</span></a>
+    <a href="#/types" data-tab="types"><svg class="k-icon" aria-hidden="true"><use href="#i-grid"/></svg><span data-t="nav_groups">Plant types</span></a>
+    <a href="#/saved" data-tab="saved"><svg class="k-icon" aria-hidden="true"><use href="#i-bookmark"/></svg><span data-t="nav_saved">Saved</span></a>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

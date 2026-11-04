@@ -1,0 +1,29 @@
+<!-- Kaadu portfolio card, ready to paste into ~/Documents/gopinath-portfolio/index.html at the end of #side-projects (after the Mettu card).
+     Also add, next to the other .thumb.wmt lines:
+       .thumb.wmt.kaadu{--base:#eef3ec;--g1:#cfe5d6;--g2:#e8efd2}
+     In `const data={...}`:
+       kaadu:["Kaadu","A bilingual English and Tamil field guide to every kind of plant, grouped by growth form, with live iNaturalist and Wikipedia data, designed and built with AI-assisted coding."],
+     In the protos object:
+       kaadu:{title:"Kaadu",text:"Every kind of plant, from banyan trees to mosses, grouped by growth form, in English and Tamil. A hand-written library of 70 well-known plants, an endless list of real plants recorded on iNaturalist, plant pages with photos, facts, Wikipedia summaries and sources, and swipe to the next plant.",views:[["Mobile app","prototypes/kaadu/mobile.html"],["Web app","https://kaadu-plants.vercel.app/"]]},
+     In tools/sync.mjs APPS:
+       { key: 'kaadu', copy: [['kaadu/prototype', 'prototypes/kaadu']] }, // mobile.html frames kaadu-plants.vercel.app; shots from the app's tools/shots.mjs
+     And copy prototype/shots/web-kaadu.jpg to assets/thumbs/web-kaadu.jpg.
+     Once an APK exists, add the apk-dl link and apk-note like the FarmerFriend card. -->
+  <article class="card wide" data-project="kaadu">
+    <div class="thumb wmt kaadu duo"><figure class="web-win"><span class="wbar"><i></i><i></i><i></i><b></b></span><img src="assets/thumbs/web-kaadu.jpg" alt="Kaadu web app on a desktop browser: Indian gooseberry as plant of the day, suggested searches and growth-form chips with plant photos" width="1440" height="900" loading="lazy" decoding="async"></figure><div class="phones">
+      <img src="prototypes/kaadu/shots/vines.jpg" alt="Vines and climbers group: a definition, chips with plant photos and cards for jasmine, betel vine and black pepper" width="600" height="1306" loading="lazy" decoding="async">
+      <img src="prototypes/kaadu/shots/home.jpg" alt="Kaadu home with the plant of the day, a short description and an Open button" width="600" height="1306" loading="lazy" decoding="async">
+      <img src="prototypes/kaadu/shots/plant-ta.jpg" alt="Banyan page in Tamil, titled ஆலமரம், with a photo gallery, the English and scientific names and a Trees tag" width="600" height="1306" loading="lazy" decoding="async">
+    </div></div>
+    <div class="wide-body">
+      <h3>Kaadu <span lang="ta">காடு</span></h3>
+      <p>A field guide to every kind of plant, grouped the way people see them: trees, shrubs, vines, herbs, grasses and bamboo, ferns, succulents, water plants, mosses, palms and conifers. A hand-written library of 70 well-known plants, many from Tamil Nadu like neem, banyan, betel vine and lotus, leads into an endless list of real plants recorded in India or worldwide on iNaturalist. Each plant page has photos with credits, facts as icon tiles, a Wikipedia summary and its sources, and you swipe to the next one. The whole app switches to Tamil, with Tamil plant names from Wikidata.</p>
+      <ul class="wide-facts">
+        <li><b>Role</b>Product design and front-end build</li>
+        <li><b>Stack</b>HTML, CSS, JavaScript, iNaturalist, Wikipedia, Wikidata</li>
+        <li><b>Status</b>Live web app, installable on phones</li>
+      </ul>
+      <div class="get-app"><a class="live-dl" href="https://kaadu-plants.vercel.app" target="_blank" rel="noopener"><span><b>Open the live app ↗</b><small>On a phone: Share → Add to Home Screen</small></span></a></div>
+      <div class="tags"><span class="tag">Mobile + Web App</span><span class="tag">Real data</span><span class="tag">AI Assisted</span><span class="tag live">Prototype</span><a class="round-arrow case-open" href="#" data-project="kaadu" aria-label="Open Kaadu prototype">→</a></div>
+    </div>
+  </article>
