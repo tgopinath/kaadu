@@ -7,7 +7,7 @@
   --ink: #eef1ef; --ink-2: #b8c0bb; --ink-muted: #8e9892;
 }
 
-:root { --tabbar-h: 64px; --top-h: 64px; --gutter: clamp(16px, 4vw, 56px); --maxw: 1680px; --card-w: clamp(124px, 31vw, 208px); }
+:root { --tabbar-h: 64px; --top-h: 64px; --gutter: clamp(16px, 4vw, 56px); --maxw: none; --card-w: clamp(124px, 31vw, 208px); }
 html { scroll-padding-top: calc(var(--top-h) + 16px); }
 body { background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: clip; padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
 img { display: block; max-width: 100%; }
@@ -201,6 +201,7 @@ html:lang(ta) .tabbar a { font-size: 11px; letter-spacing: -.01em; }
 .dhero .hero-title { font-size: clamp(36px, 6vw, 72px); }
 .dmain { display: grid; gap: 24px; margin-top: 8px; }
 @media (min-width: 900px) { .dmain { grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 48px; } }
+@media (min-width: 1600px) { .dmain { grid-template-columns: minmax(0, 72ch) minmax(280px, 560px); gap: 64px; } }
 .forms { display: flex; flex-wrap: wrap; gap: 8px; }
 .forms a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px 0 8px; border-radius: var(--radius-pill); border: 1.5px solid var(--line-strong); color: var(--ink); font: 700 14px/20px var(--font-sans); }
 .forms a:hover { border-color: var(--ink-2); }
