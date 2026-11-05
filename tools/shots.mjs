@@ -25,7 +25,7 @@ try {
   ws.onmessage = e => { const m = JSON.parse(e.data); if (pending[m.id]) { pending[m.id](m); delete pending[m.id]; } };
   const send = (method, params = {}) => new Promise(r => { const i = ++id; pending[i] = r; ws.send(JSON.stringify({ id: i, method, params })); });
   const origin = `http://127.0.0.1:${port}`;
-  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 849, deviceScaleFactor: 2, mobile: true });
   const grab = async (hash, file, { wait = 5000, lang = 'en', js } = {}) => {
     await send('Page.navigate', { url: `${origin}/index.html` }); await sleep(1500);
@@ -38,7 +38,7 @@ try {
     execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '84', '--resampleWidth', '600', png, '--out', path.join(SHOTS, file + '.jpg')], { stdio: 'pipe' });
   };
   await grab('#/', 'home', { wait: 8000 });
-  await grab('#/g/vine', 'vines', { wait: 8000 });
+  await grab('#/g/vine', 'vines', { wait: 8000, js: 'scrollTo(0, 430)' });
   await grab('#/p/banyan', 'plant-ta', { lang: 'ta', wait: 7000 });
   await grab('#/types', 'types', { wait: 6000 });
   // Desktop shot for the portfolio card's browser window (1440x900, saved as JPEG).
