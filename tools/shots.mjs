@@ -38,7 +38,7 @@ try {
     execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '84', '--resampleWidth', '600', png, '--out', path.join(SHOTS, file + '.jpg')], { stdio: 'pipe' });
   };
   await grab('#/', 'home', { wait: 8000 });
-  await grab('#/g/vine', 'vines', { wait: 8000, js: 'scrollTo(0, 430)' });
+  await grab('#/g/vine', 'vines', { wait: 8000 });
   await grab('#/p/banyan', 'plant-ta', { lang: 'ta', wait: 7000 });
   await grab('#/types', 'types', { wait: 6000 });
   // Desktop shot for the portfolio card's browser window (1440x900, saved as JPEG).
