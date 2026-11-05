@@ -376,8 +376,9 @@ async function viewDetail({ plant: p, id }) {
     <article>
       ${hero({ url: pics[0]?.url, title: name, ta: isTa() && !!ta,
         meta: `${isTa() && ta ? `<span>${esc(en)}</span>` : (!isTa() && ta ? `<span lang="ta">${esc(ta)}</span>` : '')}<span class="sci">${esc(sci)}</span>${fam ? `<span>${esc(fam)}</span>` : ''}`,
-        actions: `<button class="hbtn hbtn-ghost" id="saveBtn" type="button" aria-pressed="${sv}">${saveLabel(sv)}</button><span id="wikiBtn"></span>` }).replace('class="hero"', 'class="hero dhero"')}
+        actions: `<button class="hbtn hbtn-primary" id="infoBtn" type="button" aria-expanded="false" aria-controls="info">${icon('info')}<span>${tr('more_info')}</span>${icon('chev', 'k-icon chev')}</button><button class="hbtn hbtn-ghost" id="saveBtn" type="button" aria-pressed="${sv}">${saveLabel(sv)}</button><span id="wikiBtn"></span>` }).replace('class="hero"', 'class="hero dhero"')}
       <div class="under-hero">
+        <div class="info" id="info" hidden>
         <div class="dmain">
           <div>
             ${formLinks ? `<div class="forms" aria-label="${tr('f_form')}">${formLinks}</div>` : ''}
@@ -396,12 +397,20 @@ async function viewDetail({ plant: p, id }) {
             ${obs ? `<div class="fact"><dt>${icon('eye')}iNaturalist</dt><dd>${esc(obs)}</dd></div>` : ''}
           </dl>
         </div>
+        <details class="sources" id="sources"><summary>${icon('book')}${tr('sources')}${icon('chev')}</summary><ol id="srcList"></ol></details>
+        </div>
         ${pics.length > 1 ? `<section class="row"><div class="row-head"><h2 class="row-title">${tr('photos')}</h2></div>${rail(pics.map((x, i) => `<figure class="shot"><img src="${x.url}" alt="${esc(tr('photo_n', { i: i + 1, n: pics.length }) + ': ' + name)}" loading="lazy"><figcaption>${esc(x.by || '')}</figcaption></figure>`).join(''), 'rail-shots')}</section>` : ''}
         ${alike.length ? row(tr('more_like'), alike.map(plantCard).join('')) : ''}
-        <details class="sources" id="sources"><summary>${icon('book')}${tr('sources')}${icon('chev')}</summary><ol id="srcList"></ol></details>
       </div>
     </article>`;
   wireSave($('#saveBtn'), { h, n: name, sci, img: pics[0]?.url ? med(pics[0].url) : '' });
+  // Details (growth forms, description, facts, sources) stay folded away until asked for.
+  $('#infoBtn').onclick = () => {
+    const b = $('#infoBtn'), panel = $('#info'), open = panel.hidden;
+    panel.hidden = !open; b.setAttribute('aria-expanded', open);
+    b.querySelector('span').textContent = tr(open ? 'less_info' : 'more_info');
+    if (open) panel.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  };
 
   // Wikipedia: English summary, or Tamil Wikipedia's when Tamil is on (falls back to English).
   const src = [];
