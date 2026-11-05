@@ -199,11 +199,6 @@ html:lang(ta) .tabbar a { font-size: 11px; letter-spacing: -.01em; }
 .pn span { opacity: .4; }
 .dhero { min-height: min(72vh, 640px); }
 .dhero .hero-title { font-size: clamp(36px, 6vw, 72px); }
-.info { padding-top: 8px; scroll-margin-top: calc(var(--top-h) + 64px); }
-@media (prefers-reduced-motion: no-preference) { .info:not([hidden]) { animation: info-in var(--duration-slow) ease-out; } }
-@keyframes info-in { from { opacity: 0; transform: translateY(-8px); } }
-.hbtn .chev { width: 18px; height: 18px; margin-left: -2px; transition: transform var(--duration-base); }
-.hbtn[aria-expanded="true"] .chev { transform: rotate(180deg); }
 .dmain { display: grid; gap: 24px; margin-top: 8px; }
 @media (min-width: 900px) { .dmain { grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 48px; } }
 @media (min-width: 1600px) { .dmain { grid-template-columns: minmax(0, 72ch) minmax(280px, 560px); gap: 64px; } }
@@ -225,6 +220,57 @@ html:lang(ta) .tabbar a { font-size: 11px; letter-spacing: -.01em; }
 .shot { position: relative; margin: 0; aspect-ratio: 16 / 10; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-sunken); }
 .shot img { width: 100%; height: 100%; object-fit: cover; }
 .shot figcaption { position: absolute; left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 2px 8px; border-radius: var(--radius-xs); font-size: 11px; line-height: 16px; color: #fff; background: #000000a6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ---------- Info sheet: centred window on wide screens, bottom sheet on phones ---------- */
+.sheet-open, .sheet-open body { overflow: hidden; }
+.sheet { width: min(820px, calc(100vw - 48px)); max-width: none; max-height: calc(100vh - 64px); margin: auto; padding: 0; border: 0; border-radius: var(--radius-md); background: var(--surface); color: var(--ink); box-shadow: 0 24px 80px rgb(0 0 0 / .8); overflow: hidden; display: none; flex-direction: column; }
+.sheet[open] { display: flex; }
+.sheet::backdrop { background: rgb(0 0 0 / .72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet[open] { animation: sheet-in 260ms cubic-bezier(.2, .8, .2, 1); }
+  .sheet[open]::backdrop { animation: fade-in 200ms ease-out; }
+}
+@keyframes sheet-in { from { opacity: 0; transform: translateY(24px) scale(.98); } }
+@keyframes fade-in { from { opacity: 0; } }
+.sheet-head { position: relative; flex: none; min-height: 200px; display: flex; align-items: flex-end; background: var(--surface-sunken); isolation: isolate; }
+.sheet-bg { position: absolute; inset: 0; z-index: -1; }
+.sheet-bg img { width: 100%; height: 100%; object-fit: cover; }
+.sheet-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, var(--surface) 2%, rgb(22 26 24 / .55) 45%, rgb(0 0 0 / .15)); }
+.sheet-x { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(0 0 0 / .65); color: #fff; cursor: pointer; }
+.sheet-x:hover { background: #000; }
+.sheet-x:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sheet-title { padding: 0 28px 4px; }
+.sheet-title h2 { margin: 0; font: 900 clamp(28px, 4vw, 40px)/1.1 var(--font-display); letter-spacing: -.02em; text-shadow: 0 2px 16px rgb(0 0 0 / .6); }
+.sheet-title h2:lang(ta) { line-height: 1.35; letter-spacing: 0; }
+.sheet-title p { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
+.sheet-body { overflow-y: auto; overscroll-behavior: contain; padding: 16px 28px 28px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.stat { display: grid; gap: 2px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-sunken); }
+.stat .k-icon { width: 20px; height: 20px; color: var(--primary); margin-bottom: 6px; }
+.stat b { font: 900 18px/24px var(--font-display); overflow-wrap: anywhere; }
+.stat span { font-size: 13px; line-height: 18px; color: var(--ink-muted); }
+.sheet .forms { margin-top: 16px; }
+.sheet-lead { margin: 18px 0 0; font-size: 18px; line-height: 29px; max-width: 64ch; }
+.wiki-card { margin: 18px 0 0; padding: 16px 18px; border-left: 3px solid var(--primary); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-sunken); }
+.wiki-card figcaption { display: flex; align-items: center; gap: 6px; font: 700 13px/18px var(--font-sans); color: var(--ink-muted); }
+.wiki-card figcaption .k-icon { width: 16px; height: 16px; }
+.wiki-card p { margin: 8px 0 10px; color: var(--ink-2); font-size: 16px; line-height: 25px; }
+.wiki-card .ext { font-size: 14px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 20px; }
+.note-item { display: grid; grid-template-columns: 24px 1fr; gap: 10px; }
+.note-item .k-icon { width: 20px; height: 20px; color: var(--primary); margin-top: 2px; }
+.note-item b { font: 700 13px/18px var(--font-sans); color: var(--ink-muted); }
+.note-item p { margin: 2px 0 0; font-size: 15px; line-height: 22px; }
+.sheet .sources { margin-top: 24px; }
+@media (max-width: 640px) {
+  .sheet { width: 100vw; max-height: 92vh; margin: auto 0 0; border-radius: 20px 20px 0 0; }
+  .sheet::before { content: ""; position: absolute; z-index: 2; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: rgb(255 255 255 / .5); }
+  .sheet-head { min-height: 168px; }
+  .sheet-title, .sheet-body { padding-inline: 20px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (prefers-reduced-motion: no-preference) { .sheet[open] { animation: sheet-up 300ms cubic-bezier(.2, .8, .2, 1); } }
+}
+@keyframes sheet-up { from { transform: translateY(100%); } }
+
 /* Sources (citation pattern) */
 .sources { margin-top: 32px; border-top: 1px solid var(--line); padding-top: 8px; }
 .sources summary { display: flex; align-items: center; gap: 8px; min-height: 48px; cursor: pointer; font-weight: 700; list-style: none; }

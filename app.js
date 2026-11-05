@@ -348,6 +348,8 @@ function detailBar(h) {
   return `<div class="dbar"><a class="crumb" href="${lastList}" data-back>${icon('back')} ${tr('back')}</a><div class="pn">${pn(prev, 'prev')}${pn(next, 'next')}</div></div>`;
 }
 
+const stat = (ic, k, v) => v ? `<div class="stat">${icon(ic)}<b>${esc(v)}</b><span>${tr(k)}</span></div>` : '';
+const note = (ic, k, v) => v ? `<div class="note-item">${icon(ic)}<div><b>${tr(k)}</b><p>${esc(v)}</p></div></div>` : '';
 const fact = (ic, k, v) => v ? `<div class="fact"><dt>${icon(ic)}${tr(k)}</dt><dd>${esc(v)}</dd></div>` : '';
 async function viewDetail({ plant: p, id }) {
   const h = p ? `#/p/${p.key}` : `#/t/${id}`;
@@ -376,41 +378,44 @@ async function viewDetail({ plant: p, id }) {
     <article>
       ${hero({ url: pics[0]?.url, title: name, ta: isTa() && !!ta,
         meta: `${isTa() && ta ? `<span>${esc(en)}</span>` : (!isTa() && ta ? `<span lang="ta">${esc(ta)}</span>` : '')}<span class="sci">${esc(sci)}</span>${fam ? `<span>${esc(fam)}</span>` : ''}`,
-        actions: `<button class="hbtn hbtn-primary" id="infoBtn" type="button" aria-expanded="false" aria-controls="info">${icon('info')}<span>${tr('more_info')}</span>${icon('chev', 'k-icon chev')}</button><button class="hbtn hbtn-ghost" id="saveBtn" type="button" aria-pressed="${sv}">${saveLabel(sv)}</button><span id="wikiBtn"></span>` }).replace('class="hero"', 'class="hero dhero"')}
+        actions: `<button class="hbtn hbtn-primary" id="infoBtn" type="button" aria-haspopup="dialog" aria-controls="info">${icon('info')}<span>${tr('more_info')}</span></button><button class="hbtn hbtn-ghost" id="saveBtn" type="button" aria-pressed="${sv}">${saveLabel(sv)}</button><span id="wikiBtn"></span>` }).replace('class="hero"', 'class="hero dhero"')}
       <div class="under-hero">
-        <div class="info" id="info" hidden>
-        <div class="dmain">
-          <div>
-            ${formLinks ? `<div class="forms" aria-label="${tr('f_form')}">${formLinks}</div>` : ''}
-            <section class="prose" aria-labelledby="abt">
-              <h2 id="abt" class="visually-hidden">${tr('about')}</h2>
-              ${p && !isTa() ? `<p class="lead">${esc(p.about)}</p>` : ''}
-              <div id="wiki">${p && !isTa() ? '' : '<div class="skeleton sk-line" style="width:90%"></div><div class="skeleton sk-line"></div>'}</div>
-            </section>
+        <dialog class="sheet" id="info" aria-labelledby="infoTitle">
+          <div class="sheet-head">
+            ${pics[0] ? `<div class="sheet-bg">${img(pics[0].url, '', false)}</div>` : ''}
+            <button class="sheet-x" type="button" data-close aria-label="${tr('close')}">${icon('x')}</button>
+            <div class="sheet-title">
+              <h2 id="infoTitle"${isTa() && ta ? ' lang="ta"' : ''}>${esc(name)}</h2>
+              <p>${isTa() && ta ? esc(en) + ' · ' : (!isTa() && ta ? `<span lang="ta">${esc(ta)}</span> · ` : '')}<span class="sci">${esc(sci)}</span></p>
+            </div>
           </div>
-          <dl class="facts">
-            ${fact('family', 'f_family', fam)}
-            ${fact('ruler', 'f_height', p?.h)}
-            ${fact('pin', 'f_habitat', p?.hab)}
-            ${fact('globe', 'f_native', p?.nat)}
-            ${fact('hand', 'f_uses', p?.uses)}
-            ${obs ? `<div class="fact"><dt>${icon('eye')}iNaturalist</dt><dd>${esc(obs)}</dd></div>` : ''}
-          </dl>
-        </div>
-        <details class="sources" id="sources"><summary>${icon('book')}${tr('sources')}${icon('chev')}</summary><ol id="srcList"></ol></details>
-        </div>
+          <div class="sheet-body">
+            <div class="stats">
+              ${stat('ruler', 'f_height', p?.h)}
+              ${stat('family', 'f_family', fam)}
+              ${stat('globe', 'f_native', p?.nat)}
+              ${t?.observations_count ? stat('eye', 'records', t.observations_count.toLocaleString(isTa() ? 'ta-IN' : 'en-IN')) : ''}
+            </div>
+            ${formLinks ? `<div class="forms" aria-label="${tr('f_form')}">${formLinks}</div>` : ''}
+            ${p && !isTa() ? `<p class="sheet-lead">${esc(p.about)}</p>` : ''}
+            <div id="wiki">${p && !isTa() ? '' : '<div class="skeleton sk-line" style="width:90%"></div><div class="skeleton sk-line"></div>'}</div>
+            ${p?.hab || p?.uses ? `<div class="notes">${note('pin', 'f_habitat', p?.hab)}${note('hand', 'f_uses', p?.uses)}</div>` : ''}
+            <details class="sources" id="sources"><summary>${icon('book')}${tr('sources')}${icon('chev')}</summary><ol id="srcList"></ol></details>
+          </div>
+        </dialog>
         ${pics.length > 1 ? `<section class="row"><div class="row-head"><h2 class="row-title">${tr('photos')}</h2></div>${rail(pics.map((x, i) => `<figure class="shot"><img src="${x.url}" alt="${esc(tr('photo_n', { i: i + 1, n: pics.length }) + ': ' + name)}" loading="lazy"><figcaption>${esc(x.by || '')}</figcaption></figure>`).join(''), 'rail-shots')}</section>` : ''}
         ${alike.length ? row(tr('more_like'), alike.map(plantCard).join('')) : ''}
       </div>
     </article>`;
   wireSave($('#saveBtn'), { h, n: name, sci, img: pics[0]?.url ? med(pics[0].url) : '' });
-  // Details (growth forms, description, facts, sources) stay folded away until asked for.
-  $('#infoBtn').onclick = () => {
-    const b = $('#infoBtn'), panel = $('#info'), open = panel.hidden;
-    panel.hidden = !open; b.setAttribute('aria-expanded', open);
-    b.querySelector('span').textContent = tr(open ? 'less_info' : 'more_info');
-    if (open) panel.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  };
+  // Details open in a sheet over the page: a centred window on wide screens, a bottom sheet on phones.
+  const sheet = $('#info');
+  const shut = () => { if (!sheet.open) return; document.documentElement.classList.remove('sheet-open'); sheet.close(); };
+  $('#infoBtn').onclick = () => { sheet.showModal(); document.documentElement.classList.add('sheet-open'); sheet.querySelector('.sheet-body').scrollTop = 0; };
+  sheet.addEventListener('close', () => { document.documentElement.classList.remove('sheet-open'); $('#infoBtn')?.focus(); });
+  sheet.addEventListener('click', e => { if (e.target === sheet || e.target.closest('[data-close]')) shut(); });
+  sheet.addEventListener('click', e => { if (e.target.closest('.forms a')) shut(); });
+
 
   // Wikipedia: English summary, or Tamil Wikipedia's when Tamil is on (falls back to English).
   const src = [];
@@ -423,10 +428,10 @@ async function viewDetail({ plant: p, id }) {
   if (location.hash !== h) return;
   const wikiEl = $('#wiki');
   if (w?.text) {
-    wikiEl.innerHTML = `<div class="from">${icon('book')}${tr(wTa ? 'wiki_ta' : 'from_wiki')}</div><p class="wiki"${wTa ? ' lang="ta"' : ''}>${esc(w.text)}</p>`;
+    wikiEl.innerHTML = `<figure class="wiki-card"><figcaption>${icon('book')}${tr(wTa ? 'wiki_ta' : 'from_wiki')}</figcaption><p${wTa ? ' lang="ta"' : ''}>${esc(w.text)}</p>${w.url ? `<a class="ext" href="${w.url}" target="_blank" rel="noopener">${tr('read_more')}${icon('external')}</a>` : ''}</figure>`;
     if (w.url) $('#wikiBtn').outerHTML = `<a class="hbtn hbtn-ghost" href="${w.url}" target="_blank" rel="noopener">${icon('external')}<span>${tr('read_more')}</span></a>`;
     src.push(`${tr('src_wiki')}: <a href="${w.url}" target="_blank" rel="noopener">${wTa ? 'Tamil ' : ''}Wikipedia</a>`);
-  } else wikiEl.innerHTML = p && isTa() ? `<p class="lead">${esc(p.about)}</p>` : '';
+  } else wikiEl.innerHTML = p && isTa() ? `<p class="sheet-lead">${esc(p.about)}</p>` : '';
   $('#srcList').innerHTML = src.map(s => `<li><span>${s}</span></li>`).join('');
   document.title = `${name} · Kaadu`;
 
@@ -437,13 +442,13 @@ async function viewDetail({ plant: p, id }) {
 let sx = 0, sy = 0, st = 0;
 app.addEventListener('touchstart', e => { const p = e.touches[0]; sx = p.clientX; sy = p.clientY; st = Date.now(); }, { passive: true });
 app.addEventListener('touchend', e => {
-  if (!/^#\/(p|t)\//.test(location.hash) || e.target.closest?.('.rail, .chips')) return;
+  if (!/^#\/(p|t)\//.test(location.hash) || document.querySelector('dialog[open]') || e.target.closest?.('.rail, .chips')) return;
   const p = e.changedTouches[0], dx = p.clientX - sx, dy = p.clientY - sy;
   if (sx < 24 || Date.now() - st > 600 || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * .6) return;
   step(dx < 0 ? 'next' : 'prev', dx);
 }, { passive: true });
 document.addEventListener('keydown', e => {
-  if (!/^#\/(p|t)\//.test(location.hash) || e.target.closest?.('input, textarea, .rail') || e.altKey || e.metaKey || e.ctrlKey) return;
+  if (!/^#\/(p|t)\//.test(location.hash) || document.querySelector('dialog[open]') || e.target.closest?.('input, textarea, .rail') || e.altKey || e.metaKey || e.ctrlKey) return;
   if (e.key === 'ArrowRight') step('next', -1); else if (e.key === 'ArrowLeft') step('prev', 1);
 });
 function step(dir, dx) {

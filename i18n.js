@@ -29,7 +29,7 @@ export const STR = {
     photo_n: 'Photo {i} of {n}',
     see_all: 'See all', top10: 'Top 10 plants in India today', more_like: 'More like this', photos: 'Photos', open: 'Open',
     scroll_l: 'Scroll left', scroll_r: 'Scroll right', nav_search: 'Search', search_title: 'Search', search_lede: 'Type a common name, a scientific name or a family above, or try one of these.',
-    my_list: 'My list', more_info: 'More info', less_info: 'Hide info', rank: 'Number {n}',
+    my_list: 'My list', more_info: 'More info', close: 'Close', records: 'iNaturalist records', rank: 'Number {n}',
   },
   ta: {
     nav_home: 'கண்டறி', nav_groups: 'தாவர வகைகள்', nav_saved: 'சேமித்தவை',
@@ -60,7 +60,7 @@ export const STR = {
     photo_n: 'படம் {i} / {n}',
     see_all: 'அனைத்தும்', top10: 'இந்தியாவின் முதல் 10 தாவரங்கள்', more_like: 'இதுபோன்றவை', photos: 'படங்கள்', open: 'திற',
     scroll_l: 'இடப்பக்கம் நகர்த்து', scroll_r: 'வலப்பக்கம் நகர்த்து', nav_search: 'தேடல்', search_title: 'தேடல்', search_lede: 'மேலே பொதுப் பெயர், அறிவியல் பெயர் அல்லது குடும்பப் பெயரை எழுதுங்கள், அல்லது இவற்றில் ஒன்றை முயலுங்கள்.',
-    my_list: 'என் பட்டியல்', more_info: 'மேலும் தகவல்', less_info: 'தகவலை மறை', rank: 'எண் {n}',
+    my_list: 'என் பட்டியல்', more_info: 'மேலும் தகவல்', close: 'மூடு', records: 'iNaturalist பதிவுகள்', rank: 'எண் {n}',
   },
 };
 
