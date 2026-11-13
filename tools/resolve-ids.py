@@ -13,7 +13,7 @@ if ids_file.exists():
     m = re.search(r'=\s*(\{.*\});', ids_file.read_text(), re.S)
     if m: known = json.loads(m.group(1))
 # Names iNaturalist files under a different accepted name (checked by hand with /taxa/autocomplete).
-known.update({'Hibiscus rosa-sinensis': 1628098, 'Murraya koenigii': 1579705, 'Dracaena trifasciata': 67710, 'Alsophila gigantea': 1414806})
+known.update({'Citrus limon': 331124, 'Raphanus sativus': 995125, 'Hibiscus rosa-sinensis': 1628098, 'Murraya koenigii': 1579705, 'Dracaena trifasciata': 67710, 'Alsophila gigantea': 1414806})
 def get(url):
     for _ in range(4):
         r = subprocess.run(['curl', '-s', '-m', '15', url], capture_output=True, text=True)

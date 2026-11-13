@@ -1,6 +1,6 @@
 import { PLANTS, GROUPS } from './data.js';
 import { TA_NAMES } from './data-ta.js';
-import { STR, TA_GROUPS, GROUP_BLURB } from './i18n.js';
+import { STR, TA_GROUPS, GROUP_BLURB, FORM_ONE, TA_RANKS } from './i18n.js';
 
 const INAT = 'https://api.inaturalist.org/v1';
 const INDIA = 6681; // iNaturalist place ID for India
@@ -36,6 +36,25 @@ function toast(msg) {
   const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
 }
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------------------------------------------------------------- app mode (after Zoorassic Park)
+// Inside the Android app (Capacitor shell, or Chrome's installed app) the page follows Material Design 3;
+// inside the iPhone app (user agent "Kaadu-iOS", or added to the Home Screen) it follows Apple's HIG.
+// ?app=android | ios | web forces a look for testing (and is remembered on this device).
+const APP = (() => {
+  try { const m = location.search.match(/[?&]app=(android|ios|web)/); if (m) localStorage.setItem('kd.appmode', JSON.stringify(m[1] === 'web' ? false : m[1])); } catch {}
+  const forced = store.get('kd.appmode', null);
+  if (forced !== null) return forced;
+  const ua = navigator.userAgent, standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (/Kaadu-iOS/.test(ua) || (standalone && /iPhone|iPad/.test(ua))) return 'ios';
+  if (window.Capacitor?.getPlatform?.() === 'android' || /; wv\)/.test(ua) || (standalone && /Android/.test(ua))) return 'android';
+  return false;
+})();
+const IOS = APP === 'ios';
+// Native haptics in the iPhone app (light tap, success, error).
+const haptic = kind => { try { window.webkit?.messageHandlers?.haptic?.postMessage(kind || 'light'); } catch {} };
 
 // ---------------------------------------------------------------- data access
 const memo = new Map();
@@ -49,7 +68,7 @@ const big = u => u?.replace(/\/(square|small|medium|thumb)\./, '/large.');
 const med = u => u?.replace(/\/(square|small|thumb|large|original)\./, '/medium.');
 
 // Library photos and ancestry come from iNaturalist in batches of 30, cached on the device for a day.
-let lib = store.get('kd.lib.v1', null);
+let lib = store.get('kd.lib.v2', null);
 async function loadLibrary() {
   if (lib && Date.now() - lib.t < 864e5) return lib.map;
   const ids = PLANTS.map(p => p.id).filter(Boolean), map = {};
@@ -57,7 +76,7 @@ async function loadLibrary() {
     const r = await api(`/taxa/${ids.slice(i, i + 30).join(',')}`);
     for (const t of r.results) map[t.id] = { url: t.default_photo?.medium_url, by: t.default_photo?.attribution, obs: t.observations_count };
   }
-  lib = { t: Date.now(), map }; store.set('kd.lib.v1', lib);
+  lib = { t: Date.now(), map }; store.set('kd.lib.v2', lib);
   return map;
 }
 const photoOf = p => lib?.map?.[p?.id]?.url;
@@ -123,6 +142,7 @@ function say(text, btn, ta) {
   u.onend = u.onerror = () => btn?.classList.remove('speaking');
   speechSynthesis.speak(u);
 }
+const speak = (text, ta = isTa()) => { if ('speechSynthesis' in window) say(text, null, ta); };
 const sayBtn = (name, ta, cls = 'say-name') => `<button class="${cls}" type="button" data-say="${esc(name)}"${ta ? ' data-ta="1"' : ''} aria-label="${esc(tr('say_name', { name }))}" title="${esc(tr('say_name', { name }))}">${icon('speak')}</button>`;
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-say]'); if (!b) return;
@@ -234,6 +254,32 @@ const liveHead = g => `<div class="section-head">
     ${g.proxy ? `<p class="note"${langAttr()}>${esc(tr('proxy_note', { group: gLabel(g), group_l: isTa() ? gLabel(g) : g.label.toLowerCase() }))}</p>` : ''}</div>
     ${scopeSwitch()}</div>`;
 
+// Recently viewed plants (newest first, last 20), recorded when a plant page opens.
+const recent = () => store.get('kd.recent', []);
+function noteRecent(item) { store.set('kd.recent', [item, ...recent().filter(x => x.h !== item.h)].slice(0, 20)); }
+const savedCard = s => s.h.startsWith('#/p/') && byKey[s.h.slice(4)] ? plantCard(byKey[s.h.slice(4)]) : card({ h: s.h, url: s.img, name: s.n, sub: s.sci });
+
+// A to Z over the library grid: a letter shows only the plants that start with it, and says the letter.
+// With Tamil on, the letters are the Tamil initials of the names on show.
+const firstLetter = p => [...nm(p).trim()][0]?.toLocaleUpperCase() || '';
+function azBar(list) {
+  const have = new Set(list.map(firstLetter));
+  const letters = isTa() ? [...have].sort((a, b) => a.localeCompare(b, 'ta')) : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  return `<nav class="az" aria-label="${tr('az_label')}"><button class="az-all" type="button" aria-pressed="true" data-az="">${tr('az_all')}</button>${letters.map(l => `<button type="button" data-az="${l}" aria-pressed="false"${have.has(l) ? '' : ' disabled'}${isTa() && /[\u0B80-\u0BFF]/.test(l) ? ' lang="ta"' : ''}>${l}</button>`).join('')}</nav>`;
+}
+function wireAz(list) {
+  const bar = $('.az'), grid = $('#libGrid'); if (!bar || !grid) return;
+  [...grid.children].forEach((c, i) => { c.dataset.letter = firstLetter(list[i]); });
+  bar.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-az]'); if (!btn || btn.disabled) return;
+    const l = btn.dataset.az;
+    bar.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === btn));
+    [...grid.children].forEach(c => { c.hidden = !!l && c.dataset.letter !== l; });
+    if (l) speak(l.toLowerCase(), /[\u0B80-\u0BFF]/.test(l));
+    haptic();
+  });
+}
+
 async function viewHome(gk = 'all') {
   const g = groupByKey[gk] || GROUPS[0];
   if (!lib) { app.innerHTML = skeleton(8); await loadLibrary().catch(() => {}); }
@@ -242,7 +288,7 @@ async function viewHome(gk = 'all') {
   let head;
   if (g.key === 'all') {
     const f = plantOfDay(), fh = `#/p/${f.key}`, fs = isSaved(fh), fta = isTa() && !!TA_NAMES[f.key];
-    const mine = saved();
+    const mine = saved(), rec = recent();
     head = `<section class="feature">
         <a class="feature-img" href="${fh}" tabindex="-1" aria-hidden="true">${img(big(photoOf(f)), '', false)}</a>
         <div class="feature-body">
@@ -255,6 +301,7 @@ async function viewHome(gk = 'all') {
           </div>
         </div>
       </section>
+      ${rec.length ? shelf(tr('recent'), rec.map(savedCard).join('')) : ''}
       ${mine.length ? shelf(tr('my_list'), mine.map(s => card({ h: s.h, url: s.img, name: s.n, sub: s.sci })).join(''), '#/saved') : ''}
       ${shelf(tr('top10'), skelCards(6), '', { id: 'top10' })}
       ${GROUPS.filter(x => x.key !== 'all' && x.key !== 'flower').map(x => {
@@ -267,6 +314,7 @@ async function viewHome(gk = 'all') {
   }
   app.innerHTML = `${head}
     ${chips(g.key)}
+    ${list.length > 6 ? azBar(list) : ''}
     ${list.length ? `<div class="grid" id="libGrid">${list.map(plantCard).join('')}</div>` : ''}
     ${liveHead(g)}
     <div id="list">${skeleton(8)}</div>
@@ -277,6 +325,7 @@ async function viewHome(gk = 'all') {
     wireSave($('#heroSave'), { h: `#/p/${f.key}`, n: nm(f), sci: f.sci, img: photoOf(f) });
     fillTop($('#top10'));
   }
+  wireAz(list);
   listFor(g, list);
 }
 
@@ -343,6 +392,392 @@ function viewSaved() {
   app.innerHTML = `<div class="page-head"><h1 class="h-display">${tr('my_list')}</h1></div>
     ${l.length ? `<div class="grid">${l.map(s => card({ h: s.h, url: s.img, name: s.n, sub: s.sci })).join('')}</div>`
       : `<div class="empty"><b>${tr('saved_empty')}</b>${tr('saved_hint')}</div>`}`;
+}
+
+// ---------------------------------------------------------------- tree of life (after Zoorassic Park's Explore)
+// Start at the plant kingdom; each branch shows its child taxa as photo tiles, most recorded first,
+// loading more as the page scrolls. A species opens its plant page.
+const PLANTAE = 47126;
+const LEAF = ['species', 'hybrid', 'subspecies', 'variety', 'form'];
+const rankLabel = r => (isTa() && TA_RANKS[r]) || cap(r);
+const taxName = (t, ta) => (isTa() && ta) || cap(t.preferred_common_name || t.name);
+const leafHref = id => byId[id] ? `#/p/${byId[id].key}` : `#/t/${id}`;
+const num = n => (+n || 0).toLocaleString(isTa() ? 'ta-IN' : 'en-IN');
+function treeTile(t, ta) {
+  const name = taxName(t, ta), taOn = isTa() && !!ta;
+  return `<a class="tile tol" href="${LEAF.includes(t.rank) ? leafHref(t.id) : `#/explore/${t.id}`}">${img(t.default_photo?.medium_url, '')}
+    <span class="tol-rank"${langAttr()}>${esc(rankLabel(t.rank))}</span><b${taOn ? ' lang="ta"' : ''}>${esc(name)}</b>${name.toLowerCase() !== t.name.toLowerCase() ? `<i>${esc(t.name)}</i>` : ''}
+    <small>${esc(tr('n_records', { n: num(t.observations_count) }))}</small></a>`;
+}
+const skelTiles = n => `<div class="tiles tol-grid" aria-hidden="true">${Array.from({ length: n }, () => '<div class="tile skeleton"></div>').join('')}</div>`;
+function infiniteTaxa(listEl, moreEl, parent) {
+  let page = 1, grid = null, busy = false, end = false;
+  async function load() {
+    if (busy || end || !moreEl.isConnected) return;
+    busy = true;
+    if (grid) moreEl.innerHTML = `<div class="spinner" role="status" aria-label="${tr('loading_branches')}"></div>`;
+    try {
+      const r = await api(`/taxa?parent_id=${parent}&is_active=true&per_page=30&page=${page}&order_by=observations_count&order=desc`);
+      if (!moreEl.isConnected) return;
+      if (!grid) { listEl.innerHTML = '<div class="tiles tol-grid"></div>'; grid = listEl.firstChild; }
+      const items = r.results.filter(t => t.observations_count > 0);
+      const ta = isTa() ? await taNames(items.map(t => t.id)) : {};
+      if (!moreEl.isConnected) return;
+      grid.insertAdjacentHTML('beforeend', items.map(t => treeTile(t, ta[t.id])).join(''));
+      end = r.results.length < 30 || items.length < r.results.length || page * 30 >= r.total_results; page++;
+      if (!grid.children.length) listEl.innerHTML = `<div class="empty"><b>${tr('no_branches')}</b></div>`;
+      moreEl.innerHTML = end && grid.children.length > 6 ? `<p>${tr('seen_all')}</p>` : '';
+      busy = false;
+      if (!end && moreEl.getBoundingClientRect().top < innerHeight + 600) load();
+    } catch {
+      busy = false;
+      if (!moreEl.isConnected) return;
+      const retry = `<button class="btn outline" type="button">${tr('try_again')}</button>`;
+      if (grid) { moreEl.innerHTML = retry; moreEl.firstChild.onclick = load; }
+      else { listEl.innerHTML = `<div class="empty"><b>${tr('no_connect')}</b>${tr('check_net')}<div style="margin-top:16px">${retry}</div></div>`; listEl.querySelector('button').onclick = () => { listEl.innerHTML = skelTiles(6); load(); }; }
+    }
+  }
+  io?.disconnect();
+  io = new IntersectionObserver(es => { if (es[0].isIntersecting && !moreEl.querySelector('button')) load(); }, { rootMargin: '800px 0px' });
+  io.observe(moreEl);
+  load();
+}
+async function viewExplore(id = PLANTAE) {
+  const here = location.hash;
+  app.innerHTML = `<div class="page-head"><span class="eyebrow">${tr('nav_tree')}</span><div class="skeleton sk-line" style="height:40px;width:40%"></div></div>${skelTiles(9)}`;
+  let t = null;
+  try { t = (await api(`/taxa/${id}`)).results[0]; } catch {}
+  if (location.hash !== here) return;
+  if (!t) { app.innerHTML = `<div class="empty"><b>${tr('no_connect')}</b>${tr('check_net')}<div style="margin-top:16px"><button class="btn outline" type="button" id="retry">${tr('try_again')}</button></div></div>`; $('#retry').onclick = () => route({ keep: true }); return; }
+  if (LEAF.includes(t.rank)) return location.replace(leafHref(id));
+  if (id !== PLANTAE && !t.ancestor_ids?.includes(PLANTAE)) return location.replace('#/explore');
+  // The path from the plant kingdom down to here.
+  const path = [...(t.ancestors || []).filter(a => t.ancestor_ids.indexOf(a.id) >= t.ancestor_ids.indexOf(PLANTAE)), t];
+  const ta = isTa() ? await taNames(path.map(a => a.id)) : {};
+  if (location.hash !== here) return;
+  const name = id === PLANTAE ? tr('tree_title') : taxName(t, ta[t.id]), taOn = isTa() && (id === PLANTAE || !!ta[t.id]);
+  const up = path.length > 1 ? (path[path.length - 2].id === PLANTAE ? '#/explore' : `#/explore/${path[path.length - 2].id}`) : null;
+  const kids = ['genus', 'subgenus', 'section', 'complex'].includes(t.rank) ? 'tree_species' : 'tree_branches';
+  app.innerHTML = `
+    ${path.length > 1 ? `<nav class="crumbs" aria-label="${tr('tree_where')}">${path.map((a, i) => i === path.length - 1
+      ? `<span aria-current="page"${isTa() && ta[a.id] ? ' lang="ta"' : ''}>${esc(taxName(a, ta[a.id]))}</span>`
+      : `<a href="${a.id === PLANTAE ? '#/explore' : `#/explore/${a.id}`}"${isTa() && ta[a.id] ? ' lang="ta"' : ''}>${esc(a.id === PLANTAE ? tr('nav_tree') : taxName(a, ta[a.id]))}</a>${icon('next')}`).join('')}</nav>` : ''}
+    <div class="page-head"><span class="eyebrow"${langAttr()}>${esc(id === PLANTAE ? tr('nav_tree') : rankLabel(t.rank))}</span>
+      <div class="title-row"><h1 class="h-display"${taOn ? ' lang="ta"' : ''}>${esc(name)}</h1>${id === PLANTAE ? '' : sayBtn(name, taOn, 'say-name big')}</div>
+      <p class="lede">${id === PLANTAE ? esc(tr('tree_lede')) : `${name.toLowerCase() !== t.name.toLowerCase() ? `<i>${esc(t.name)}</i> · ` : ''}${esc(tr('n_records', { n: num(t.observations_count) }))}`}</p></div>
+    <div class="section-head" style="margin-top:8px"><h2 class="h-section">${tr(kids)}</h2></div>
+    <div id="list">${skelTiles(9)}</div>
+    <div class="more" id="more" aria-live="polite"></div>`;
+  appBar(id === PLANTAE ? tr('nav_tree') : name, up, taOn && id !== PLANTAE);
+  document.title = `${id === PLANTAE ? tr('nav_tree') : name} · Kaadu`;
+  infiniteTaxa($('#list'), $('#more'), id);
+}
+
+// ---------------------------------------------------------------- games (after Zoorassic Park's)
+// Five games over the library: Name it, Which type?, Odd one out, Find it and Memory match.
+// Rounds of 10 questions; a right answer chimes, throws confetti and moves on by itself after 2 s.
+let actx;
+const ac = () => (actx ||= new (window.AudioContext || window.webkitAudioContext)());
+function tone(freqs, { type = 'triangle', dur = .14, gap = .09, vol = .22, slide } = {}) {
+  try {
+    const c = ac(); c.resume?.();
+    freqs.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * gap;
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .05);
+    });
+  } catch {}
+}
+const sfxWin = () => tone([523.3, 659.3, 784, 1046.5, 1318.5], { dur: .22, gap: .08 });
+const sfxFlop = () => tone([311, 233], { type: 'sawtooth', dur: .32, gap: .3, vol: .12, slide: .72 });
+function confetti(from) {
+  if (calm() || !from?.isConnected) return;
+  const r = from.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const colors = ['#1d6b45', '#7CC6A3', '#F2B33D', '#E5487A', '#4A7DF0', '#FF7A45'];
+  const box = document.createElement('div'); box.className = 'confetti'; box.setAttribute('aria-hidden', 'true'); document.body.appendChild(box);
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('i');
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i % colors.length]};${i % 3 ? '' : 'border-radius:50%;'}`;
+    box.appendChild(p);
+    const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 260;
+    p.animate([
+      { transform: 'translate(-50%,-50%) rotate(0)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d - 120}px)) rotate(${Math.random() * 720}deg)`, opacity: 1, offset: .6 },
+      { transform: `translate(calc(-50% + ${Math.cos(a) * d * 1.1}px), calc(-50% + ${Math.sin(a) * d + 220}px)) rotate(${Math.random() * 900}deg)`, opacity: 0 },
+    ], { duration: 1300 + Math.random() * 600, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+  }
+  setTimeout(() => box.remove(), 2200);
+}
+function celebrate(el) { sfxWin(); confetti(el); haptic('success'); }
+function flop(el) { sfxFlop(); haptic('error'); if (!calm()) el.animate?.([{ transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(0)' }], { duration: 380 }); }
+
+const GAMES = [
+  { key: 'name', icon: 'eye', t: 'g_name', ask: 'g_name_ask', d: 'gd_name' },
+  { key: 'group', icon: 'f-tree', t: 'g_group', ask: 'g_group_ask', d: 'gd_group' },
+  { key: 'odd', icon: 'shuffle', t: 'g_odd', ask: 'g_odd_ask', d: 'gd_odd' },
+  { key: 'find', icon: 'search', t: 'g_find', ask: 'g_find_ask', d: 'gd_find' },
+  { key: 'memory', icon: 'cards', t: 'g_memory', ask: 'g_memory_ask', d: 'gd_memory' },
+  { key: 'fv', icon: 'f-fruit', t: 'g_fv', ask: 'g_fv_ask', d: 'gd_fv' },
+];
+const gameByKey = Object.fromEntries(GAMES.map(g => [g.key, g]));
+const formOf = p => p.forms.find(f => FORM_KEYS.includes(f));
+const hasTa = p => isTa() && !!TA_NAMES[p.key];
+const taOf = p => hasTa(p) ? ' lang="ta"' : '';
+const theName = p => isTa() ? nm(p) : p.name.toLowerCase();
+async function gamePool() {
+  if (!lib) await loadLibrary().catch(() => {});
+  return PLANTS.filter(p => photoOf(p) && formOf(p));
+}
+const scores = new Proxy({}, { get: (o, m) => (o[m] ||= store.get(`kd.score.${m}`, { stars: 0, played: 0, streak: 0 })) });
+const saveScore = mode => store.set(`kd.score.${mode}`, scores[mode]);
+const cheer = () => { const c = tr('cheers').split('|'); return c[Math.floor(Math.random() * c.length)]; };
+let lastAnswer, announceTimer, autoNextTimer;
+const pickAnswer = pool => { let a; do { a = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && a === lastAnswer); return (lastAnswer = a); };
+function scoreAnswer(mode, missed) {
+  const sc = scores[mode];
+  sc.played++;
+  if (!missed) { sc.stars++; sc.streak = (sc.streak || 0) + 1; } else sc.streak = 0;
+  saveScore(mode);
+  const st = app.querySelectorAll('.stat b');
+  if (st.length) { st[0].textContent = sc.stars; st[1].textContent = sc.streak; }
+}
+// After a right answer the next question comes by itself in 2 s (3 s after a wrong one); the Next button fills meanwhile.
+function autoNext(c, ms = 2000) {
+  const next = $('#next'); if (!next) return;
+  next.classList.add('auto'); next.style.setProperty('--auto-ms', `${ms}ms`);
+  clearTimeout(autoNextTimer);
+  autoNextTimer = setTimeout(() => { if (c.isConnected && next.isConnected) next.click(); }, ms);
+}
+// Rounds of 10 questions, with "3 of 10" progress and a results screen at the end.
+const ROUND = 10;
+let round = { mode: null, done: 0, right: 0 };
+const roundFor = mode => { if (round.mode !== mode) round = { mode, done: 0, right: 0 }; return round; };
+function resolveQ(mode, correct) { const r = roundFor(mode); r.done++; if (correct) r.right++; paintProgress(); }
+const progressHtml = mode => { const r = roundFor(mode), n = Math.min(r.done + 1, ROUND); return `<div class="qprog" id="qprog" role="progressbar" aria-label="${esc(tr('q_of', { n, total: ROUND }))}" aria-valuemin="0" aria-valuemax="${ROUND}" aria-valuenow="${r.done}"><span>${tr('q_of', { n, total: ROUND })}</span><div class="qprog-dots" aria-hidden="true">${Array.from({ length: ROUND }, (_, i) => `<i class="${i < r.done ? 'done' : i === r.done ? 'now' : ''}"></i>`).join('')}</div><small>${tr('q_left', { n: ROUND - r.done })}</small></div>`; };
+function paintProgress() { const el = $('#qprog'); if (el) el.outerHTML = progressHtml(round.mode); }
+// After the 10th question, "Next" opens the results instead of another question.
+document.addEventListener('click', e => {
+  if (!e.target.closest('#next') || round.done < ROUND) return;
+  e.stopImmediatePropagation(); clearTimeout(autoNextTimer); clearTimeout(announceTimer); showResults(round.mode);
+}, true);
+function showResults(mode) {
+  const r = round, g = gameByKey[mode], line = tr('you_got', { n: r.right, total: ROUND });
+  app.innerHTML = `<section class="quiz results">
+    <span class="eyebrow">${tr(g.t)}</span><h1 class="h-display">${tr('round_done')}</h1>
+    <div class="res-card"><div class="res-big"><strong>${r.right}</strong><span>/ ${ROUND}</span></div>
+      <div class="res-stars" role="img" aria-label="${esc(line)}">${Array.from({ length: 5 }, (_, i) => `<i class="${i < Math.round(r.right / 2) ? 'on' : ''}">${icon('star')}</i>`).join('')}</div>
+      <p class="res-line" role="status">${esc(line)}</p></div>
+    <div class="row res-acts"><button class="btn accent" type="button" id="again">${icon('play')} ${tr('play_again')}</button><a class="btn outline" href="#/game">${tr('all_games')}</a></div></section>`;
+  celebrate($('.res-card')); speak(line);
+  $('#again').onclick = () => { round = { mode: null }; route(); };
+}
+// The game's title and question (with a speaker), the score, and the round's progress.
+function quizHead(mode) {
+  const sc = scores[mode], g = gameByKey[mode];
+  return `<nav class="quiz-modes" aria-label="${tr('games_title')}"><a href="#/game">${icon('back')} ${tr('all_games')}</a></nav>
+    <div class="quiz-top">
+      <div><span class="eyebrow">${tr(g.t)}</span><div class="title-row"><h1 class="h-display">${tr(g.ask)}</h1>${sayBtn(tr(g.ask), isTa())}</div></div>
+      <div class="stats"><div class="stat"><b>${sc.stars}</b><span>${tr('correct')}</span></div><div class="stat"><b>${sc.streak || 0}</b><span>${tr('streak')}</span></div></div>
+    </div>
+    ${mode !== 'memory' ? progressHtml(mode) : ''}`;
+}
+const quizEmpty = mode => { app.innerHTML = `<section class="quiz">${quizHead(mode)}<div class="empty"><b>${tr('quiz_empty')}</b>${tr('quiz_need_net')}<div style="margin-top:14px"><button class="btn outline" type="button" id="retry">${tr('try_again')}</button></div></div></section>`; $('#retry').onclick = () => { memo.clear(); lib = null; route({ keep: true }); }; };
+const feedback = () => `<div class="feedback"><p id="cheer" role="status" aria-live="polite"></p><div id="fact"></div><div class="row"><button class="btn accent" type="button" id="next" hidden>${tr('next_question')} ${icon('arrow')}</button></div></div>`;
+const cheerLine = (missed, text, href) => `<span class="${missed ? 'no' : 'ok'}">${missed ? tr('oops') : cheer()} — ${esc(text)}</span>${href ? ` <a class="more-link" href="${href}">${tr('learn_more')}</a>` : ''}`;
+// After every answer, a short "Did you know?" card about the plant, so each question teaches something.
+function showFact(p) {
+  const el = $('#fact'); if (!el || !p) return;
+  const f = formOf(p), bits = [p.h && `${icon('ruler')}${esc(p.h)}`, p.nat && `${icon('globe')}${esc(p.nat)}`, p.uses && `${icon('hand')}${esc(p.uses)}`].filter(Boolean);
+  el.innerHTML = `<aside class="did-know" aria-label="${tr('did_you_know')}">
+    ${photoOf(p) ? `<img src="${photoOf(p).replace('/medium.', '/square.')}" alt="">` : ''}
+    <div><b>${icon('spark')}${tr('did_you_know')}</b>
+      <p${isTa() ? ' lang="ta"' : ''}>${esc(isTa() ? `${nm(p)}: ${GROUP_BLURB.ta[f] || ''}` : p.about)}</p>
+      ${bits.length ? `<ul>${bits.map(b => `<li>${b}</li>`).join('')}</ul>` : ''}</div></aside>`;
+}
+// A photo to pick (names hidden in "Find it" until the answer is in).
+const photoChoice = (p, i, showName = true) => `<div class="choice-wrap"><button class="choice pick" type="button" data-k="${p.key}"${showName ? '' : ` aria-label="${esc(tr('photo_n', { i: i + 1, n: 4 }))}"`}><img src="${photoOf(p)}" alt=""><div${taOf(p)}${showName ? '' : ' hidden'}>${esc(nm(p))}</div></button>${showName ? sayBtn(nm(p), hasTa(p), 'say-opt in-choice') : ''}</div>`;
+
+// Shared answer handling: celebrate a right answer and move on; a wrong one flops and shows the right one.
+function wireAnswers(mode, sel, isRight, onRight, again) {
+  let done = false;
+  app.querySelectorAll(sel).forEach(c => c.onclick = () => {
+    if (done) return;
+    done = true; window.speechSynthesis?.cancel();
+    const ok = isRight(c) ? c : [...app.querySelectorAll(sel)].find(isRight), right = ok === c;
+    ok?.classList.add('right'); if (!right) { c.classList.add('wrong'); ok?.classList.add('reveal'); flop(c); } else celebrate(c);
+    app.querySelectorAll(sel).forEach(x => x !== c && x !== ok && x.classList.add('dim'));
+    scoreAnswer(mode, !right); resolveQ(mode, right);
+    onRight(ok || c, !right);
+    $('#next').hidden = false; autoNext(c, right ? 6000 : 8000); // time to read the fact card
+  });
+  $('#next').onclick = () => { clearTimeout(announceTimer); clearTimeout(autoNextTimer); again(); };
+}
+// Each game's question waits for the library photos; if the player left meanwhile, nothing is drawn.
+async function ready(mode) {
+  const here = location.hash, pool = await gamePool();
+  if (location.hash !== here) return null;
+  if (pool.length < 6) { quizEmpty(mode); return null; }
+  return pool;
+}
+
+// Name it: see a photo, pick its name from four (two of them the same type of plant).
+async function viewNameGame() {
+  const pool = await ready('name'); if (!pool) return;
+  const answer = pickAnswer(pool), f = formOf(answer);
+  const near = shuffle(pool.filter(p => p !== answer && p.forms.includes(f))).slice(0, 2);
+  const far = shuffle(pool.filter(p => p !== answer && !near.includes(p))).slice(0, 3 - near.length);
+  const opts = shuffle([answer, ...near, ...far]);
+  app.innerHTML = `<section class="quiz">${quizHead('name')}
+    <figure class="name-photo"><img id="qimg" src="${big(photoOf(answer))}" alt="${tr('mystery')}"><figcaption id="qcredit">${esc(lib.map[answer.id]?.by || '')}</figcaption></figure>
+    <div class="name-choices">${opts.map(o => `<div class="name-opt"><button class="name-choice pick" type="button" data-k="${o.key}"${taOf(o)}>${esc(nm(o))}</button>${sayBtn(nm(o), hasTa(o), 'say-opt')}</div>`).join('')}</div>
+    ${feedback()}</section>`;
+  // A random real photo, not always the one on the library card.
+  api(`/taxa/${answer.id}`).then(r => {
+    const ph = shuffle(r.results[0]?.taxon_photos || [])[0]?.photo;
+    if (ph && lastAnswer === answer && $('#qimg')) { $('#qimg').src = big(ph.medium_url); $('#qcredit').textContent = ph.attribution || ''; }
+  }).catch(() => {});
+  wireAnswers('name', '.pick', c => c.dataset.k === answer.key, (c, missed) => {
+    $('#cheer').innerHTML = cheerLine(missed, tr('its_the', { name: theName(answer) }), `#/p/${answer.key}`); showFact(answer);
+    announceTimer = setTimeout(() => speak(nm(answer), hasTa(answer)), 550);
+  }, viewNameGame);
+}
+
+// Which type? A plant's photo and name; pick how it grows (tree, vine, fern…), with the type icons.
+const formName = (k, one) => one ? FORM_ONE[lang][k] : gLabel(groupByKey[k]);
+async function viewGroupGame() {
+  const pool = await ready('group'); if (!pool) return;
+  const answer = pickAnswer(pool), f = formOf(answer);
+  const opts = shuffle([f, ...shuffle(FORM_KEYS.filter(k => !answer.forms.includes(k))).slice(0, 3)]);
+  app.innerHTML = `<section class="quiz">${quizHead('group')}
+    <figure class="name-photo"><img src="${big(photoOf(answer))}" alt="${esc(nm(answer))}"><figcaption>${esc(lib.map[answer.id]?.by || '')}</figcaption></figure>
+    <div class="title-row group-name"><b${taOf(answer)}>${esc(nm(answer))}</b>${sayBtn(nm(answer), hasTa(answer))}</div>
+    <div class="name-choices">${opts.map(k => `<div class="name-opt"><button class="name-choice form-choice pick" type="button" data-c="${k}"${langAttr()}>${icon('f-' + k)}<span>${esc(formName(k))}</span></button>${sayBtn(formName(k), isTa(), 'say-opt')}</div>`).join('')}</div>
+    ${feedback()}</section>`;
+  wireAnswers('group', '.pick', c => answer.forms.includes(c.dataset.c), (c, missed) => {
+    $('#cheer').innerHTML = cheerLine(missed, tr('is_a', { name: isTa() ? nm(answer) : answer.name, form: formName(f, true) }), `#/p/${answer.key}`); showFact(answer);
+    announceTimer = setTimeout(() => speak(formName(f)), 550);
+  }, viewGroupGame);
+}
+
+// Fruit or vegetable? A photo and name; pick how we eat it. Vegetables that are fruits to a botanist say so.
+const BOTANIC_FRUIT = new Set(['tomato', 'brinjal', 'okra', 'chilli', 'bittergourd', 'bottlegourd', 'pumpkin', 'cucumber', 'snakegourd', 'ivygourd', 'drumstick']);
+async function viewFvGame() {
+  const all = await ready('fv'); if (!all) return;
+  const pool = all.filter(p => p.forms.includes('fruit') || p.forms.includes('veg'));
+  if (pool.length < 6) return quizEmpty('fv');
+  const answer = pickAnswer(pool), k = answer.forms.includes('fruit') ? 'fruit' : 'veg';
+  app.innerHTML = `<section class="quiz">${quizHead('fv')}
+    <figure class="name-photo"><img src="${big(photoOf(answer))}" alt="${esc(nm(answer))}"><figcaption>${esc(lib.map[answer.id]?.by || '')}</figcaption></figure>
+    <div class="title-row group-name"><b${taOf(answer)}>${esc(nm(answer))}</b>${sayBtn(nm(answer), hasTa(answer))}</div>
+    <div class="name-choices fv-choices">${['fruit', 'veg'].map(x => `<div class="name-opt"><button class="name-choice form-choice pick" type="button" data-c="${x}"${langAttr()}>${icon('f-' + x)}<span>${esc(gLabel(groupByKey[x]))}</span></button>${sayBtn(gLabel(groupByKey[x]), isTa(), 'say-opt')}</div>`).join('')}</div>
+    ${feedback()}</section>`;
+  wireAnswers('fv', '.pick', c => c.dataset.c === k, (c, missed) => {
+    const line = tr(k === 'fruit' ? 'fv_fruit' : (BOTANIC_FRUIT.has(answer.key) ? 'fv_veg_fruit' : 'fv_veg'), { name: isTa() ? nm(answer) : answer.name });
+    $('#cheer').innerHTML = cheerLine(missed, line, `#/p/${answer.key}`); showFact(answer);
+    announceTimer = setTimeout(() => speak(gLabel(groupByKey[k])), 550);
+  }, viewFvGame);
+}
+
+// Odd one out: three plants that grow the same way, and one that doesn't.
+async function viewOddGame() {
+  const pool = await ready('odd'); if (!pool) return;
+  let A, odd, same;
+  for (let i = 0; i < 30 && !same; i++) {
+    const forms = FORM_KEYS.filter(k => pool.filter(p => p.forms.includes(k)).length >= 3);
+    A = forms[Math.floor(Math.random() * forms.length)];
+    odd = shuffle(pool.filter(p => !p.forms.includes(A)))[0];
+    // None of the three may also share the odd one's type, so only one answer is right.
+    const three = shuffle(pool.filter(p => p.forms.includes(A) && !p.forms.includes(formOf(odd)))).slice(0, 3);
+    if (three.length === 3 && odd !== lastAnswer) same = three;
+  }
+  if (!same) return quizEmpty('odd');
+  lastAnswer = odd;
+  const opts = shuffle([...same, odd]);
+  app.innerHTML = `<section class="quiz">${quizHead('odd')}
+    <div class="choices">${opts.map((o, i) => photoChoice(o, i)).join('')}</div>${feedback()}</section>`;
+  speak(tr('g_odd_ask'));
+  wireAnswers('odd', '.pick', c => c.dataset.k === odd.key, (c, missed) => {
+    $('#cheer').innerHTML = cheerLine(missed, tr('odd_explain', { name: isTa() ? nm(odd) : odd.name.toLowerCase(), form: formName(formOf(odd), true), others: isTa() ? gLabel(groupByKey[A]) : groupByKey[A].label.toLowerCase() }), `#/p/${odd.key}`); showFact(odd);
+    announceTimer = setTimeout(() => speak(nm(odd), hasTa(odd)), 550);
+  }, viewOddGame);
+}
+
+// Find it: hear (and see) a name, tap the right photo out of four.
+async function viewFindGame() {
+  const pool = await ready('find'); if (!pool) return;
+  const answer = pickAnswer(pool);
+  let others = shuffle(pool.filter(p => p !== answer && formOf(p) !== formOf(answer)));
+  if (others.length < 3) others = shuffle(pool.filter(p => p !== answer));
+  const opts = shuffle([answer, ...others.slice(0, 3)]);
+  app.innerHTML = `<section class="quiz">${quizHead('find')}
+    <div class="quiz-player"><button class="sound-play" type="button" id="sayAns" aria-label="${esc(tr('say_name', { name: nm(answer) }))}">${icon('speak')}</button>
+      <div><b class="find-name"${taOf(answer)}>${esc(nm(answer))}</b><p>${tr('find_hint')}</p></div></div>
+    <div class="choices">${opts.map((o, i) => photoChoice(o, i, false)).join('')}</div>${feedback()}</section>`;
+  const sayAns = () => say(nm(answer), $('#sayAns'), hasTa(answer));
+  $('#sayAns').onclick = sayAns; setTimeout(sayAns, 250);
+  wireAnswers('find', '.pick', c => c.dataset.k === answer.key, (c, missed) => {
+    app.querySelectorAll('.pick div').forEach(d => (d.hidden = false));
+    app.querySelectorAll('.pick').forEach(b => b.removeAttribute('aria-label'));
+    $('#cheer').innerHTML = cheerLine(missed, tr('its_the', { name: theName(answer) }), `#/p/${answer.key}`); showFact(answer);
+  }, viewFindGame);
+}
+
+// Memory match: turn two cards at a time to find the six pairs.
+async function viewMemoryGame() {
+  const pool = await ready('memory'); if (!pool) return;
+  const picks = shuffle(pool).slice(0, 6), cards = shuffle([...picks, ...picks]);
+  const best = store.get('kd.memory.best', 0);
+  app.innerHTML = `<section class="quiz">${quizHead('memory')}
+    <p class="lede" style="margin:12px 0 14px">${tr('memory_hint')}${best ? ` · ${tr('memory_best', { n: best })}` : ''}</p>
+    <div class="memory">${cards.map((p, i) => `<button class="mem" type="button" data-k="${p.key}" aria-label="${esc(tr('card_n', { n: i + 1 }))}"><span class="back">${icon('leaf')}</span><span class="front"><img src="${photoOf(p)}" alt=""><b${taOf(p)}>${esc(nm(p))}</b></span></button>`).join('')}</div>
+    <div class="feedback"><p id="cheer" role="status" aria-live="polite">${tr('moves', { n: 0 })} · ${tr('pairs_left', { n: picks.length })}</p><div class="row"><button class="btn accent" type="button" id="again" hidden>${tr('play_again')} ${icon('arrow')}</button></div></div></section>`;
+  speak(tr('g_memory_ask'));
+  let open = [], moves = 0, found = 0, lock = false;
+  app.querySelectorAll('.mem').forEach(c => c.onclick = () => {
+    if (lock || c.classList.contains('up')) return;
+    const p = byKey[c.dataset.k];
+    c.classList.add('up'); c.setAttribute('aria-label', nm(p)); open.push(c);
+    if (open.length < 2) return;
+    moves++;
+    const [a, b] = open; open = [];
+    const same = a.dataset.k === b.dataset.k;
+    $('#cheer').textContent = `${tr('moves', { n: moves })} · ${tr('pairs_left', { n: picks.length - found - (same ? 1 : 0) })}`;
+    if (same) {
+      a.classList.add('matched'); b.classList.add('matched'); found++;
+      tone([660, 880], { dur: .12, gap: .07 }); haptic();
+      setTimeout(() => speak(nm(p), hasTa(p)), 250);
+      if (found === picks.length) {
+        scoreAnswer('memory', false);
+        if (!best || moves < best) store.set('kd.memory.best', moves);
+        setTimeout(() => { celebrate(b); $('#cheer').innerHTML = `<span class="ok">${tr('memory_done', { n: moves })}</span>`; speak(tr('memory_done', { n: moves })); $('#again').hidden = false; $('#again').focus(); }, 700);
+      }
+    } else {
+      lock = true;
+      setTimeout(() => { sfxFlop(); [a, b].forEach((x, i) => { x.classList.remove('up'); x.setAttribute('aria-label', tr('card_n', { n: [...x.parentElement.children].indexOf(x) + 1 })); }); lock = false; }, 900);
+    }
+  });
+  $('#again').onclick = () => viewMemoryGame();
+}
+
+// The games screen: each card leads with a small picture of the game itself, made from real plant photos.
+const gp = k => { const u = photoOf(byKey[k]); return u ? `<img src="${esc(u.replace('/medium.', '/small.'))}" alt="" loading="lazy">` : '<i></i>'; };
+const gname = k => esc(nm(byKey[k]));
+const GAME_ART = {
+  name: () => `<div class="ga ga-name"><span class="ga-photo">${gp('lotus')}</span><div class="ga-chips">${['waterlily', 'lotus', 'hyacinth'].map(k => `<b class="${k === 'lotus' ? 'ok' : ''}"${taOf(byKey[k])}>${gname(k)}</b>`).join('')}</div></div>`,
+  group: () => `<div class="ga ga-name"><span class="ga-photo">${gp('coconut')}</span><div class="ga-chips">${['tree', 'palm', 'vine'].map(k => `<b class="${k === 'palm' ? 'ok' : ''}"${langAttr()}>${icon('f-' + k)}${esc(formName(k, true))}</b>`).join('')}</div></div>`,
+  odd: () => `<div class="ga ga-odd">${['neem', 'banyan', 'lotus', 'mango'].map(k => `<span class="${k === 'lotus' ? 'odd' : ''}">${gp(k)}</span>`).join('')}</div>`,
+  find: () => `<div class="ga ga-find"><span class="ga-say"${taOf(byKey.neem)}>${icon('speak')} ${gname('neem')}?</span><div class="ga-grid">${['tulsi', 'neem', 'fern', 'aloe'].map(k => `<span class="${k === 'neem' ? 'ok' : ''}">${gp(k)}</span>`).join('')}</div></div>`,
+  fv: () => `<div class="ga ga-name"><span class="ga-photo">${gp('tomato')}</span><div class="ga-chips">${['fruit', 'veg'].map(k => `<b class="${k === 'veg' ? 'ok' : ''}"${langAttr()}>${icon('f-' + k)}${esc(gLabel(groupByKey[k]))}</b>`).join('')}</div></div>`,
+  memory: () => `<div class="ga ga-memory">${[0, 1, 2, 3, 4, 5].map(i => i === 1 || i === 4 ? `<span class="up">${gp('hibiscus')}</span>` : `<span class="down">${icon('leaf')}</span>`).join('')}</div>`,
+};
+const gameCover = (k, ico) => `<span class="game-cover gc-${k}" aria-hidden="true">${GAME_ART[k]()}<span class="game-ico">${icon(ico)}</span></span>`;
+async function viewGameHub() {
+  if (!lib) { app.innerHTML = skeleton(4); await loadLibrary().catch(() => {}); }
+  if (location.hash !== '#/game') return;
+  app.innerHTML = `<div class="page-head"><span class="eyebrow">${tr('nav_games')}</span><h1 class="h-display">${tr('games_title')}</h1><p class="lede">${tr('games_lede')}</p></div>
+    <div class="games">${GAMES.map(g => `<a class="game-card" href="#/game/${g.key}">${gameCover(g.key, g.icon)}<b>${tr(g.t)}</b><span>${tr(g.d)}</span>${scores[g.key].stars ? `<small>${icon('star')} <span class="sr-only">${esc(tr('stars_n', { n: scores[g.key].stars }))}</span><span aria-hidden="true">${scores[g.key].stars}</span></small>` : ''}</a>`).join('')}</div>`;
 }
 
 // The shelf or grid a card was opened from, so a plant page can step to the previous / next plant (swipe, arrows).
@@ -430,6 +865,8 @@ async function viewDetail({ plant: p, id }) {
     </article>
     ${alike.length ? shelf(tr('more_like'), alike.map(plantCard).join('')) : ''}`;
   wireSave($('#saveBtn'), { h, n: name, sci, img: pics[0]?.url ? med(pics[0].url) : '' });
+  noteRecent({ h, n: name, sci, img: pics[0]?.url ? med(pics[0].url) : '' });
+  appBar(name, lastList, nameTa);
 
   // Photos: thumbnails pick a slide; the credit follows the slide on show.
   const slides = $('#slides'), thumbs = $('#thumbs');
@@ -454,7 +891,7 @@ async function viewDetail({ plant: p, id }) {
   $('#srcLine').innerHTML = src.join(' · ');
   document.title = `${name} · Kaadu`;
 
-  if (!store.get('kd.swipeHint', false) && matchMedia('(pointer: coarse)').matches) { store.set('kd.swipeHint', true); setTimeout(() => toast(tr('swipe_hint')), 900); }
+  if (!store.get('kd.swipeHint', false) && (APP || matchMedia('(pointer: coarse)').matches)) { store.set('kd.swipeHint', true); setTimeout(() => toast(tr('swipe_hint')), 900); }
 }
 
 // ---------------------------------------------------------------- swipe and keys for previous / next
@@ -476,6 +913,7 @@ function step(dir, dx) {
   const go = () => { if (done) return; done = true; location.replace(a.getAttribute('href')); };
   // The page slides out the way the finger went; a timer makes sure it moves on even if animations are paused.
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) app.animate?.([{ transform: 'none', opacity: 1 }, { transform: `translateX(${dx < 0 ? -48 : 48}px)`, opacity: 0 }], { duration: 160, easing: 'ease-in' });
+  haptic();
   setTimeout(go, 170);
 }
 
@@ -484,6 +922,7 @@ function setTab(tab) { document.querySelectorAll('[data-tab]').forEach(a => a.da
 function route({ keep = false } = {}) {
   route.current = location.hash || '';
   io?.disconnect(); io = null;
+  window.speechSynthesis?.cancel(); clearTimeout(announceTimer); clearTimeout(autoNextTimer);
   let h = location.hash.slice(1) || '/';
   try { h = decodeURIComponent(h); } catch {}
   const [, a, b] = h.split('/');
@@ -494,10 +933,24 @@ function route({ keep = false } = {}) {
   document.body.classList.toggle('hero-page', !a);
   document.body.classList.toggle('search-page', a === 'search');
   solidTop();
+  // The app bar's title and where its Back goes (main tabs have none); plant and branch pages set their own name.
+  const game = gameByKey[b];
+  const ab = { '': ['Kaadu'], g: [groupByKey[b] ? gLabel(groupByKey[b]) : 'Kaadu', '#/', true], types: [tr('nav_groups')], saved: [tr('my_list')],
+    search: [tr('search_title'), '#/'], explore: [tr('nav_tree'), b ? '#/explore' : null], game: [game ? tr(game.t) : tr('games_title'), game ? '#/game' : null],
+    p: [byKey[b] ? nm(byKey[b]) : '', lastList, !!(byKey[b] && hasTa(byKey[b]))], t: ['', lastList] }[a || ''] || ['Kaadu'];
+  appBar(ab[0], ab[1] || null, ab[2] && isTa());
+  document.documentElement.classList.toggle('searching', !!APP && a === 'search');
   if (!a) { setTab('home'); return viewHome(); }
   if (a === 'g' && groupByKey[b]) { setTab('home'); return viewHome(b); }
   if (a === 'types') { setTab('types'); return viewTypes(); }
   if (a === 'saved') { setTab('saved'); return viewSaved(); }
+  if (a === 'explore') { setTab('explore'); return viewExplore(+b || PLANTAE); }
+  if (a === 'game') {
+    setTab('game');
+    if (b && !game) return location.replace('#/game');
+    if (round.done >= ROUND || round.mode !== b) round = { mode: null }; // coming back to a game starts a fresh round
+    return { name: viewNameGame, group: viewGroupGame, odd: viewOddGame, find: viewFindGame, memory: viewMemoryGame, fv: viewFvGame }[b]?.() ?? viewGameHub();
+  }
   if (a === 'search' && b) { setTab('search'); return viewSearch(h.slice(8)); }
   if (a === 'search') { setTab('search'); return viewSearchHome(); }
   if (a === 'p' && byKey[b]) { setTab(''); return viewDetail({ plant: byKey[b] }); }
@@ -514,8 +967,81 @@ $('#langBtn').onclick = () => { lang = isTa() ? 'en' : 'ta'; store.set('kd.lang'
 // The header sits see-through over a page's billboard and turns solid once the page scrolls.
 const solidTop = () => $('.top').classList.toggle('solid', !document.body.classList.contains('hero-page') || scrollY > 40);
 addEventListener('scroll', solidTop, { passive: true });
+// Profile panel: language, My list and game stars live here, out of the top bar.
+const pBtn = $('#profileBtn'), pPanel = $('#profilePanel');
+// In the Android / iPhone apps the top bar is the app bar, so the panel hangs from its profile button instead.
+if (APP) { document.body.appendChild(pPanel); pPanel.classList.add('in-app'); }
+function setProfile(open) {
+  pPanel.hidden = !open; pBtn.setAttribute('aria-expanded', open); $('#abProfile')?.setAttribute('aria-expanded', open);
+  if (open) {
+    $('#ppSaved').textContent = saved().length || '';
+    $('#ppStars').textContent = GAMES.reduce((n, g) => n + (scores[g.key].stars || 0), 0) || '';
+    $('#langBtn').focus();
+  }
+}
+pBtn.onclick = e => { e.stopPropagation(); setProfile(pPanel.hidden); };
+document.addEventListener('click', e => { if (e.target.closest('#abProfile')) { e.stopPropagation(); setProfile(pPanel.hidden); } }, true);
+document.addEventListener('click', e => { if (!pPanel.hidden && !e.target.closest('.profile, #profilePanel, #abProfile')) setProfile(false); });
+pPanel.addEventListener('click', e => { if (e.target.closest('.pp-link')) setProfile(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pPanel.hidden) { setProfile(false); pBtn.focus(); } });
 const setTop = () => document.documentElement.style.setProperty('--top-h', `${$('.top').offsetHeight}px`);
 setTop(); addEventListener('resize', setTop);
+
+// ---------------------------------------------------------------- app mode: app bar, search, ripples, Back
+// The app bar title and back arrow for the current screen (main tabs have no back arrow).
+function appBar(title, up, ta) {
+  if (!APP) return;
+  const t = $('#abTitle'); t.textContent = title; ta ? t.setAttribute('lang', 'ta') : t.removeAttribute('lang');
+  $('#abBack').hidden = !up; if (up) $('#abBack').dataset.up = up;
+  // iOS shows where Back goes ("‹ Discover"); a long name falls back to "Back".
+  const upName = up && ({ '#/': tr('nav_home'), '#/explore': tr('nav_tree'), '#/game': tr('games_title'), '#/types': tr('nav_groups'), '#/saved': tr('my_list') }[up] || tr('back'));
+  $('#abBack .ab-back-label').textContent = upName && upName.length <= 14 ? upName : tr('back');
+  document.documentElement.classList.toggle('root', !up);
+}
+if (APP) {
+  const html = document.documentElement;
+  html.classList.add('app', APP);
+  addEventListener('scroll', () => html.classList.toggle('scrolled', scrollY > 4), { passive: true });
+  document.body.insertAdjacentHTML('afterbegin', `<header class="appbar" id="appbar">
+    <button class="ab-btn" type="button" id="abBack" aria-label="${tr('back')}" hidden>${icon('back')}<span class="ab-back-label">${tr('back')}</span></button>
+    <h1 class="ab-title" id="abTitle">Kaadu</h1>
+    <button class="ab-btn" type="button" id="abSearch" aria-label="${tr('search_label')}">${icon('search')}</button>
+    <button class="ab-btn ab-profile" type="button" id="abProfile" aria-haspopup="true" aria-expanded="false" aria-controls="profilePanel">${icon('user')}</button>
+  </header>`);
+  const syncAb = () => { $('#abProfile').setAttribute('aria-label', tr('profile')); $('#abSearch').setAttribute('aria-label', tr('search_label')); $('#abBack').setAttribute('aria-label', tr('back')); };
+  syncAb();
+  $('#langBtn').addEventListener('click', () => setTimeout(syncAb));
+  $('#abBack').onclick = () => (moved ? history.back() : (location.hash = $('#abBack').dataset.up || '#/'));
+  // Search opens as a full-width search field over the app bar (the Search page).
+  $('#abSearch').onclick = () => { if (!location.hash.startsWith('#/search')) location.hash = '#/search'; setTimeout(() => $('#searchInput').focus(), 60); };
+  $('#searchForm').insertAdjacentHTML(IOS ? 'beforeend' : 'afterbegin', `<button type="button" class="ab-btn" id="searchClose" aria-label="${tr('cancel')}" data-cancel="${tr('cancel')}">${icon('back')}</button>`);
+  $('#searchClose').onclick = () => { $('#searchInput').value = ''; html.classList.remove('searching'); moved ? history.back() : (location.hash = '#/'); };
+  // Material ripple on touch (Android only; iOS dims what you press).
+  if (!IOS) document.addEventListener('pointerdown', e => {
+    const t = e.target.closest('button, a.card, .btn, .filter, .tabbar a, .game-card, .tile, .ab-btn, .choice, .name-choice, .mem, .az button');
+    if (!t || t.disabled || calm()) return;
+    const cs = getComputedStyle(t);
+    if (cs.position === 'static') t.style.position = 'relative';
+    if (cs.overflow === 'visible') t.style.overflow = 'hidden';
+    const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
+    const rip = document.createElement('span');
+    rip.className = 'ripple';
+    rip.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+    t.appendChild(rip); setTimeout(() => rip.remove(), 550);
+  }, { passive: true });
+  // Android's Back button (the shell has @capacitor/app): close search, else go back a screen; the other
+  // main tabs return to Discover; Back on Discover leaves the app.
+  if (window.Capacitor) {
+    const CapApp = window.Capacitor.Plugins?.App;
+    CapApp?.addListener?.('backButton', () => {
+      if (html.classList.contains('searching')) return $('#searchClose').click();
+      const h = location.hash || '#/';
+      if (['#/explore', '#/game', '#/saved', '#/types'].includes(h)) return (location.hash = '#/');
+      if (h !== '#/' && h !== '#') return moved ? history.back() : (location.hash = $('#abBack').dataset.up || '#/');
+      CapApp.exitApp?.();
+    });
+  }
+}
 syncLang();
 route();
 if ('serviceWorker' in navigator && location.protocol !== 'file:' && !/localhost|127\.0\.0\.1/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});

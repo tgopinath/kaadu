@@ -18,4 +18,9 @@ export const TA_NAMES = {
   aloe: 'கற்றாழை', pricklypear: 'சப்பாத்திக்கள்ளி', kalli: 'கொம்புக்கள்ளி', snakeplant: 'பாம்புச் செடி', kalanchoe: 'ரணகள்ளி',
   lotus: 'தாமரை', waterlily: 'அல்லி', hyacinth: 'ஆகாயத்தாமரை', duckweed: 'நீர்ப்பாசி',
   moss: 'பாசி', sphagnum: 'பீட் பாசி', marchantia: 'ஈரல் பாசி',
+  banana: 'வாழை', guava: 'கொய்யா', papaya: 'பப்பாளி', pomegranate: 'மாதுளை', sapota: 'சப்போட்டா', custardapple: 'சீதாப்பழம்',
+  jamun: 'நாவல்', lemon: 'எலுமிச்சை', pineapple: 'அன்னாசி', watermelon: 'தர்பூசணி',
+  tomato: 'தக்காளி', brinjal: 'கத்தரி', okra: 'வெண்டை', drumstick: 'முருங்கை', onion: 'வெங்காயம்', chilli: 'மிளகாய்',
+  potato: 'உருளைக்கிழங்கு', carrot: 'கேரட்', bittergourd: 'பாகற்காய்', bottlegourd: 'சுரைக்காய்', pumpkin: 'பூசணி',
+  cucumber: 'வெள்ளரி', radish: 'முள்ளங்கி', amaranth: 'முளைக்கீரை', snakegourd: 'புடலங்காய்', colocasia: 'சேப்பங்கிழங்கு',
 };

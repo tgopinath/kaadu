@@ -29,7 +29,27 @@ export const STR = {
     photo_n: 'Photo {i} of {n}',
     see_all: 'See all', top10: 'Most recorded in India', more_like: 'More like this', photos: 'Photos', open: 'Open',
     scroll_l: 'Scroll left', scroll_r: 'Scroll right', nav_search: 'Search', search_title: 'Search', search_lede: 'Type a common name, a scientific name or a family above, or try one of these.',
-    my_list: 'My list', say_name: 'Say “{name}”', no_voice: 'This device can’t speak names', meet: 'Meet the {name}', every_plant: 'Every plant', wikipedia: 'Wikipedia', more_info: 'More info', close: 'Close', records: 'iNaturalist records', rank: 'Number {n}',
+    my_list: 'My list', profile: 'Profile', profile_note: 'Saved on this device', language: 'Language', pp_stars: 'Game stars', pp_about: 'A field guide to every kind of plant, fruit and vegetable, with photos from iNaturalist and summaries from Wikipedia.', did_you_know: 'Did you know?', say_name: 'Say “{name}”', no_voice: 'This device can’t speak names', meet: 'Meet the {name}', every_plant: 'Every plant', wikipedia: 'Wikipedia', more_info: 'More info', close: 'Close', records: 'iNaturalist records', rank: 'Number {n}',
+    nav_explore: 'Explore', nav_tree: 'Tree of life', nav_games: 'Games', recent: 'Recently viewed',
+    az_label: 'Plants by first letter', az_all: 'All', cancel: 'Cancel',
+    tree_title: 'The tree of life', tree_lede: 'Every plant on Earth, branch by branch. Start at the plant kingdom and tap a branch to go deeper, down to a single species.',
+    tree_branches: 'Branches, most recorded first', tree_species: 'Species, most recorded first', tree_where: 'Where you are in the tree of life',
+    n_records: '{n} records', no_branches: 'No smaller branches are recorded here yet.', loading_branches: 'Loading more branches',
+    games_title: 'Games', games_lede: 'Six ways to learn plants, fruits and vegetables. Every answer teaches you something new, and every name can be heard aloud.', all_games: 'All games',
+    g_name: 'Name it', g_name_ask: 'Which plant is this?', gd_name: 'See a photo, pick its name.',
+    g_fv: 'Fruit or vegetable?', g_fv_ask: 'Do we eat it as a fruit or a vegetable?', gd_fv: 'Mango or brinjal? Sort what we eat, and find out which vegetables are secretly fruits.',
+    fv_fruit: 'the {name} is eaten as a fruit.', fv_veg: 'the {name} is a vegetable.', fv_veg_fruit: 'we cook the {name} as a vegetable, but botanists call it a fruit: it grows from a flower and holds seeds.',
+    g_group: 'Which type?', g_group_ask: 'How does this plant grow?', gd_group: 'Tree, vine, fern or grass? Pick how it grows.',
+    g_odd: 'Odd one out', g_odd_ask: 'Which one is different?', gd_odd: 'Three grow the same way. Tap the one that doesn’t.',
+    g_find: 'Find it', g_find_ask: 'Can you find it?', gd_find: 'Hear a name, tap the right photo.', find_hint: 'Tap to hear the name again',
+    g_memory: 'Memory match', g_memory_ask: 'Find the matching pairs!', gd_memory: 'Flip cards to find two of the same plant.',
+    memory_hint: 'Tap two cards to turn them over.', memory_best: 'Best: {n} moves', moves: 'Moves: {n}', pairs_left: '{n} pairs to find',
+    memory_done: 'You found every pair in {n} moves!', card_n: 'Card {n}, face down', say_q: 'Hear the question',
+    next_question: 'Next', correct: 'Correct', streak: 'Streak', cheers: 'Correct|Brilliant|Spot on|Well done|Nailed it', oops: 'Oops',
+    its_the: 'it’s the {name}.', is_a: 'The {name} is a {form}.', odd_explain: 'The {name} is a {form}; the others are {others}.',
+    q_of: 'Question {n} of {total}', q_left: '{n} left', round_done: 'Round complete!', you_got: 'You got {n} out of {total}.', play_again: 'Play again',
+    quiz_empty: 'Can’t start the game', quiz_need_net: 'The plant photos need the internet. Check the connection and try again.',
+    learn_more: 'Learn more', mystery: 'A mystery plant', stars_n: '{n} right so far',
   },
   ta: {
     nav_home: 'கண்டறி', nav_groups: 'தாவர வகைகள்', nav_saved: 'சேமித்தவை',
@@ -60,20 +80,40 @@ export const STR = {
     photo_n: 'படம் {i} / {n}',
     see_all: 'அனைத்தும்', top10: 'இந்தியாவில் அதிகம் பதிவானவை', more_like: 'இதுபோன்றவை', photos: 'படங்கள்', open: 'திற',
     scroll_l: 'இடப்பக்கம் நகர்த்து', scroll_r: 'வலப்பக்கம் நகர்த்து', nav_search: 'தேடல்', search_title: 'தேடல்', search_lede: 'மேலே பொதுப் பெயர், அறிவியல் பெயர் அல்லது குடும்பப் பெயரை எழுதுங்கள், அல்லது இவற்றில் ஒன்றை முயலுங்கள்.',
-    my_list: 'என் பட்டியல்', say_name: '“{name}” எனச் சொல்', no_voice: 'இந்தச் சாதனத்தால் பெயர்களைச் சொல்ல முடியாது', meet: '{name} பற்றி அறிய', every_plant: 'எல்லாத் தாவரங்களும்', wikipedia: 'விக்கிப்பீடியா', more_info: 'மேலும் தகவல்', close: 'மூடு', records: 'iNaturalist பதிவுகள்', rank: 'எண் {n}',
+    my_list: 'என் பட்டியல்', profile: 'சுயவிவரம்', profile_note: 'இந்தச் சாதனத்தில் சேமிக்கப்படும்', language: 'மொழி', pp_stars: 'விளையாட்டு நட்சத்திரங்கள்', pp_about: 'எல்லா வகைத் தாவரங்கள், பழங்கள், காய்கறிகளுக்குமான களக் கையேடு; படங்கள் iNaturalist இலிருந்து, சுருக்கங்கள் விக்கிப்பீடியாவிலிருந்து.', did_you_know: 'உங்களுக்குத் தெரியுமா?', say_name: '“{name}” எனச் சொல்', no_voice: 'இந்தச் சாதனத்தால் பெயர்களைச் சொல்ல முடியாது', meet: '{name} பற்றி அறிய', every_plant: 'எல்லாத் தாவரங்களும்', wikipedia: 'விக்கிப்பீடியா', more_info: 'மேலும் தகவல்', close: 'மூடு', records: 'iNaturalist பதிவுகள்', rank: 'எண் {n}',
+    nav_explore: 'ஆராய்', nav_tree: 'உயிர் மரம்', nav_games: 'விளையாட்டு', recent: 'சமீபத்தில் பார்த்தவை',
+    az_label: 'முதல் எழுத்து வாரியாகத் தாவரங்கள்', az_all: 'எல்லாம்', cancel: 'ரத்து',
+    tree_title: 'உயிர் மரம்', tree_lede: 'பூமியின் எல்லாத் தாவரங்களும், கிளை கிளையாக. தாவர உலகிலிருந்து தொடங்கி, ஒரு கிளையைத் தட்டி உள்ளே செல்லுங்கள்; ஒரே ஓர் இனம் வரை.',
+    tree_branches: 'கிளைகள், அதிகம் பதிவானவை முதலில்', tree_species: 'இனங்கள், அதிகம் பதிவானவை முதலில்', tree_where: 'உயிர் மரத்தில் நீங்கள் இருக்கும் இடம்',
+    n_records: '{n} பதிவுகள்', no_branches: 'இங்கே சிறிய கிளைகள் எதுவும் இன்னும் பதிவாகவில்லை.', loading_branches: 'மேலும் கிளைகள் வருகின்றன',
+    games_title: 'விளையாட்டுகள்', games_lede: 'தாவரங்களையும் அவை வளரும் விதத்தையும் கற்க ஆறு வழிகள். ஒவ்வொரு பெயரையும் கேள்வியையும் சத்தமாகக் கேட்கலாம்.', all_games: 'எல்லா விளையாட்டுகளும்',
+    g_name: 'பெயர் சொல்', g_name_ask: 'இது எந்தத் தாவரம்?', gd_name: 'படத்தைப் பார்த்து, பெயரைத் தேர்ந்தெடுங்கள்.',
+    g_fv: 'பழமா, காயா?', g_fv_ask: 'இதைப் பழமாக உண்கிறோமா, காய்கறியாகவா?', gd_fv: 'மாம்பழமா, கத்தரிக்காயா? பிரித்துப் பாருங்கள்; எந்தக் காய்கறிகள் உண்மையில் பழங்கள் என்றும் அறியுங்கள்.',
+    fv_fruit: '{name} பழமாக உண்ணப்படுகிறது.', fv_veg: '{name} ஒரு காய்கறி.', fv_veg_fruit: '{name} காய்கறியாகச் சமைக்கிறோம்; ஆனால் பூவிலிருந்து வளர்ந்து விதைகளைக் கொண்டிருப்பதால் தாவரவியலில் அது ஒரு பழம்.',
+    g_group: 'எந்த வகை?', g_group_ask: 'இந்தத் தாவரம் எப்படி வளர்கிறது?', gd_group: 'மரமா, கொடியா, பன்னமா, புல்லா? அது வளரும் வகையைத் தேர்ந்தெடுங்கள்.',
+    g_odd: 'வேறுபட்டது எது?', g_odd_ask: 'இவற்றில் எது வேறுபட்டது?', gd_odd: 'மூன்று ஒரே விதமாக வளர்கின்றன. மாறுபட்டதைத் தட்டுங்கள்.',
+    g_find: 'கண்டுபிடி', g_find_ask: 'கண்டுபிடிக்க முடியுமா?', gd_find: 'பெயரைக் கேட்டு, சரியான படத்தைத் தட்டுங்கள்.', find_hint: 'பெயரை மீண்டும் கேட்கத் தட்டுங்கள்',
+    g_memory: 'நினைவுப் பொருத்தம்', g_memory_ask: 'ஒரே மாதிரியான ஜோடிகளைக் கண்டுபிடியுங்கள்!', gd_memory: 'அட்டைகளைத் திருப்பி ஒரே தாவரத்தின் ஜோடியைக் கண்டுபிடியுங்கள்.',
+    memory_hint: 'இரண்டு அட்டைகளைத் தட்டித் திருப்புங்கள்.', memory_best: 'சிறந்தது: {n} முயற்சிகள்', moves: 'முயற்சிகள்: {n}', pairs_left: 'இன்னும் {n} ஜோடிகள்',
+    memory_done: '{n} முயற்சிகளில் எல்லா ஜோடிகளையும் கண்டுபிடித்தீர்கள்!', card_n: 'அட்டை {n}, கவிழ்ந்துள்ளது', say_q: 'கேள்வியைக் கேள்',
+    next_question: 'அடுத்தது', correct: 'சரி', streak: 'தொடர்', cheers: 'சரி!|அருமை!|சூப்பர்!|நன்று!|கலக்கல்!', oops: 'அச்சச்சோ',
+    its_the: 'இது {name}.', is_a: '{name} ஒரு {form}.', odd_explain: '{name} ஒரு {form}; மற்றவை {others}.',
+    q_of: 'கேள்வி {n} / {total}', q_left: 'இன்னும் {n}', round_done: 'சுற்று முடிந்தது!', you_got: '{total} இல் {n} சரி.', play_again: 'மீண்டும் விளையாடு',
+    quiz_empty: 'விளையாட்டைத் தொடங்க முடியவில்லை', quiz_need_net: 'தாவரப் படங்களுக்கு இணையம் தேவை. இணைப்பைச் சரிபார்த்து மீண்டும் முயலுங்கள்.',
+    learn_more: 'மேலும் அறிக', mystery: 'ஒரு புதிர்த் தாவரம்', stars_n: 'இதுவரை {n} சரி',
   },
 };
 
 // Tamil labels for the growth-form groups.
 export const TA_GROUPS = {
-  all: 'எல்லாத் தாவரங்களும்', tree: 'மரங்கள்', shrub: 'புதர்ச்செடிகள்', vine: 'கொடிகள்', herb: 'சிறு செடிகள், மூலிகைகள்',
+  all: 'எல்லாத் தாவரங்களும்', fruit: 'பழங்கள்', veg: 'காய்கறிகள்', tree: 'மரங்கள்', shrub: 'புதர்ச்செடிகள்', vine: 'கொடிகள்', herb: 'சிறு செடிகள், மூலிகைகள்',
   grass: 'புற்களும் மூங்கிலும்', fern: 'பன்னங்கள்', succulent: 'கள்ளிகள், சதைப்பற்றுச் செடிகள்', aquatic: 'நீர்த் தாவரங்கள்',
   moss: 'பாசிகள்', palm: 'பனை வகைகள்', conifer: 'ஊசியிலை மரங்கள்', flower: 'பூக்கும் தாவரங்கள்',
 };
 // One line per group for the "Plant types" page.
 export const GROUP_BLURB = {
   en: {
-    all: 'Every plant in the library and on iNaturalist.', tree: 'Woody plants with one main trunk, usually taller than 5 m.',
+    all: 'Every plant in the library and on iNaturalist.', fruit: 'Plants we grow for their sweet or juicy fruit, from mango and banana to jamun.', veg: 'Plants whose leaves, stems, roots, pods or fruit we cook and eat as vegetables.', tree: 'Woody plants with one main trunk, usually taller than 5 m.',
     shrub: 'Woody plants with many stems from the base, usually under 5 m.', vine: 'Plants that climb, twine or trail on others for support.',
     herb: 'Soft-stemmed plants that stay small, including leafy greens and medicinal herbs.', grass: 'Narrow-leaved plants with jointed stems, from lawns to bamboo.',
     fern: 'Spore-bearing plants with unrolling fronds and no flowers.', succulent: 'Plants that store water in thick leaves or stems.',
@@ -82,7 +122,7 @@ export const GROUP_BLURB = {
     flower: 'Plants that make flowers and seeds inside fruit: most plants on Earth.',
   },
   ta: {
-    all: 'நூலகத்திலும் iNaturalist இலும் உள்ள எல்லாத் தாவரங்களும்.', tree: 'ஒரு முதன்மைத் தண்டு கொண்ட, பொதுவாக 5 மீட்டருக்கு மேல் உயரமான மரங்கள்.',
+    all: 'நூலகத்திலும் iNaturalist இலும் உள்ள எல்லாத் தாவரங்களும்.', fruit: 'இனிப்பான, சாறுள்ள பழங்களுக்காக வளர்க்கும் தாவரங்கள்; மா, வாழை முதல் நாவல் வரை.', veg: 'இலை, தண்டு, வேர், காய் அல்லது பழத்தைச் சமைத்து உண்ணும் காய்கறித் தாவரங்கள்.', tree: 'ஒரு முதன்மைத் தண்டு கொண்ட, பொதுவாக 5 மீட்டருக்கு மேல் உயரமான மரங்கள்.',
     shrub: 'அடியிலிருந்து பல தண்டுகள் கொண்ட, 5 மீட்டருக்குக் குறைவான செடிகள்.', vine: 'பிற தாவரங்களைப் பற்றி ஏறும், சுற்றும் அல்லது படரும் தாவரங்கள்.',
     herb: 'மென்மையான தண்டு கொண்ட சிறு செடிகள்; கீரைகள், மூலிகைகள் உட்பட.', grass: 'கணுக்கள் கொண்ட தண்டும் குறுகிய இலைகளும் உள்ளவை; புல்வெளி முதல் மூங்கில் வரை.',
     fern: 'பூக்கள் இல்லாமல், வித்துகளால் பெருகும், சுருள் விரியும் இலைகள் கொண்டவை.', succulent: 'தடித்த இலைகளிலோ தண்டுகளிலோ நீரைச் சேமிக்கும் தாவரங்கள்.',
@@ -90,4 +130,17 @@ export const GROUP_BLURB = {
     palm: 'கிளையில்லாத் தண்டின் உச்சியில் பெரிய இலைகளின் கொத்து.', conifer: 'ஊசி அல்லது செதில் இலைகளும் கூம்புகளும் கொண்ட மரங்கள்.',
     flower: 'பூக்களையும் கனிக்குள் விதைகளையும் உருவாக்கும் தாவரங்கள்: பூமியின் பெரும்பாலான தாவரங்கள்.',
   },
+};
+
+// One plant of each growth form, for sentences in the games ("The neem is a tree.").
+export const FORM_ONE = {
+  en: { tree: 'tree', shrub: 'shrub', vine: 'vine', herb: 'herb', grass: 'grass', fern: 'fern', succulent: 'succulent', aquatic: 'water plant', moss: 'moss', palm: 'palm', conifer: 'conifer' },
+  ta: { tree: 'மரம்', shrub: 'புதர்ச்செடி', vine: 'கொடி', herb: 'சிறு செடி', grass: 'புல்', fern: 'பன்னம்', succulent: 'சதைப்பற்றுச் செடி', aquatic: 'நீர்த் தாவரம்', moss: 'பாசி', palm: 'பனை வகை', conifer: 'ஊசியிலை மரம்' },
+};
+// Tamil names for the ranks of the tree of life (English shows iNaturalist's rank, capitalised).
+export const TA_RANKS = {
+  kingdom: 'திணை', subkingdom: 'துணைத் திணை', phylum: 'தொகுதி', subphylum: 'துணைத் தொகுதி', superclass: 'பெரு வகுப்பு', class: 'வகுப்பு', subclass: 'துணை வகுப்பு',
+  superorder: 'பெரு வரிசை', order: 'வரிசை', suborder: 'துணை வரிசை', superfamily: 'பெருங்குடும்பம்', family: 'குடும்பம்', subfamily: 'துணைக் குடும்பம்',
+  tribe: 'இனக்குழு', subtribe: 'துணை இனக்குழு', genus: 'பேரினம்', subgenus: 'துணைப் பேரினம்', section: 'பிரிவு', subsection: 'துணைப் பிரிவு',
+  complex: 'இனத் தொகுப்பு', species: 'இனம்', hybrid: 'கலப்பினம்', subspecies: 'துணையினம்', variety: 'வகை', form: 'வடிவம்',
 };
