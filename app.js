@@ -32,6 +32,7 @@ function syncLang() {
   document.querySelectorAll('[data-t-label]').forEach(el => { el.setAttribute('aria-label', tr(el.dataset.tLabel)); });
 }
 function toast(msg) {
+  if (document.documentElement.classList.contains('k-android') && window.KolamM3) return KolamM3.snackbar(msg, { duration: 2600 });
   document.querySelectorAll('.toast').forEach(t => t.remove());
   const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
@@ -39,22 +40,24 @@ function toast(msg) {
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// ---------------------------------------------------------------- app mode (after Zoorassic Park)
-// Inside the Android app (Capacitor shell, or Chrome's installed app) the page follows Material Design 3;
-// inside the iPhone app (user agent "Kaadu-iOS", or added to the Home Screen) it follows Apple's HIG.
-// ?app=android | ios | web forces a look for testing (and is remembered on this device).
+// ---------------------------------------------------------------- app modes
+// Android app (Capacitor shell, Android WebView or Chrome's installed app): Material Design 3 from the shared
+// Kolam M3 kit (kolam-m3.js sets html.k-android; ?app=android / ?app=web force it on / off for this tab).
+// iPhone app (user agent "Kaadu-iOS", or added to the Home Screen): this file's own Apple HIG bar (?app=ios).
 const APP = (() => {
-  try { const m = location.search.match(/[?&]app=(android|ios|web)/); if (m) localStorage.setItem('kd.appmode', JSON.stringify(m[1] === 'web' ? false : m[1])); } catch {}
-  const forced = store.get('kd.appmode', null);
-  if (forced !== null) return forced;
+  try { const m = location.search.match(/[?&]app=(android|ios|web)/); if (m) localStorage.setItem('kd.appmode', JSON.stringify(m[1] === 'ios' ? 'ios' : false)); } catch {}
+  if (store.get('kd.appmode', null) === 'ios') return 'ios';
+  if (window.KolamM3?.isAndroid) return 'android';
   const ua = navigator.userAgent, standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if (/Kaadu-iOS/.test(ua) || (standalone && /iPhone|iPad/.test(ua))) return 'ios';
-  if (window.Capacitor?.getPlatform?.() === 'android' || /; wv\)/.test(ua) || (standalone && /Android/.test(ua))) return 'android';
   return false;
 })();
-const IOS = APP === 'ios';
-// Native haptics in the iPhone app (light tap, success, error).
-const haptic = kind => { try { window.webkit?.messageHandlers?.haptic?.postMessage(kind || 'light'); } catch {} };
+const IOS = APP === 'ios', ANDROID = APP === 'android';
+// Haptics: the iPhone app's native bridge, or the Android kit (Capacitor Haptics / vibrate).
+const haptic = kind => {
+  if (ANDROID) return KolamM3.haptic(kind === 'success' ? 'medium' : kind === 'error' ? 'heavy' : 'light');
+  try { window.webkit?.messageHandlers?.haptic?.postMessage(kind || 'light'); } catch {}
+};
 
 // ---------------------------------------------------------------- data access
 const memo = new Map();
@@ -900,7 +903,7 @@ app.addEventListener('touchstart', e => { const p = e.touches[0]; sx = p.clientX
 app.addEventListener('touchend', e => {
   if (!/^#\/(p|t)\//.test(location.hash) || document.querySelector('dialog[open]') || e.target.closest?.('.slides, .thumbs, .shelf-track, .filters')) return;
   const p = e.changedTouches[0], dx = p.clientX - sx, dy = p.clientY - sy;
-  if (sx < 24 || Date.now() - st > 600 || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * .6) return;
+  if (sx < 24 || (ANDROID && sx > innerWidth - 24) || Date.now() - st > 600 || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * .6) return;
   step(dx < 0 ? 'next' : 'prev', dx);
 }, { passive: true });
 document.addEventListener('keydown', e => {
@@ -918,7 +921,7 @@ function step(dir, dx) {
 }
 
 // ---------------------------------------------------------------- routing
-function setTab(tab) { document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')); }
+function setTab(tab) { m3?.setActive?.(tab || null); document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')); }
 function route({ keep = false } = {}) {
   route.current = location.hash || '';
   io?.disconnect(); io = null;
@@ -987,10 +990,17 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pPanel.hi
 const setTop = () => document.documentElement.style.setProperty('--top-h', `${$('.top').offsetHeight}px`);
 setTop(); addEventListener('resize', setTop);
 
-// ---------------------------------------------------------------- app mode: app bar, search, ripples, Back
-// The app bar title and back arrow for the current screen (main tabs have no back arrow).
+// ---------------------------------------------------------------- app mode: app bar, search, Back
+// The app bar title and back for the current screen (main tabs have none).
+let m3 = null;
 function appBar(title, up, ta) {
   if (!APP) return;
+  if (ANDROID) {
+    m3.setTitle(title);
+    const t = m3.appBar?.querySelector('.md-top-app-bar__title'); if (t) ta ? t.setAttribute('lang', 'ta') : t.removeAttribute('lang');
+    if (up) m3.setBack(up); // where Back goes when the page was opened on a deep link
+    return;
+  }
   const t = $('#abTitle'); t.textContent = title; ta ? t.setAttribute('lang', 'ta') : t.removeAttribute('lang');
   $('#abBack').hidden = !up; if (up) $('#abBack').dataset.up = up;
   // iOS shows where Back goes ("‹ Discover"); a long name falls back to "Back".
@@ -998,9 +1008,44 @@ function appBar(title, up, ta) {
   $('#abBack .ab-back-label').textContent = upName && upName.length <= 14 ? upName : tr('back');
   document.documentElement.classList.toggle('root', !up);
 }
-if (APP) {
+if (APP) document.documentElement.classList.add('app', APP);
+if (ANDROID) {
+  // App bar, navigation bar, ripples, snackbar and Back come from the kit. No back arrow in the bar:
+  // the phone's own Back button goes back (Back on another main tab returns to Discover, then leaves).
   const html = document.documentElement;
-  html.classList.add('app', APP);
+  const actions = () => [{ id: 'abProfile', icon: 'account_circle', label: tr('profile') }];
+  m3 = KolamM3.init({
+    primary: '#7cc6a3', title: 'Kaadu', back: false,
+    destinations: [
+      { id: 'home', label: tr('nav_home'), icon: 'home', href: '#/' },
+      { id: 'explore', label: tr('nav_explore'), icon: 'account_tree', href: '#/explore' },
+      { id: 'game', label: tr('nav_games'), icon: 'auto_awesome', href: '#/game' },
+      { id: 'search', label: tr('nav_search'), icon: 'search', href: '#/search' },
+      { id: 'saved', label: tr('my_list'), icon: 'bookmark', href: '#/saved' },
+    ],
+    actions: actions(), hide: ['.tabbar'],
+    onBack: () => {
+      if (!pPanel.hidden) { setProfile(false); return true; }
+      if (html.classList.contains('searching') && !location.hash.startsWith('#/search')) { $('#searchClose').click(); return true; }
+    },
+  });
+  m3.relabel = () => {
+    const keys = { home: 'nav_home', explore: 'nav_explore', game: 'nav_games', search: 'nav_search', saved: 'my_list' };
+    // Five destinations leave ~72dp per label: two Tamil labels get a shorter word (the full one stays as the name).
+    const shortTa = { game: 'ஆட்டம்', saved: 'பட்டியல்' };
+    document.querySelectorAll('.md-nav-item').forEach(el => {
+      const l = el.querySelector('.md-nav-label'), full = tr(keys[el.dataset.dest]);
+      l.textContent = (isTa() && shortTa[el.dataset.dest]) || full; l.lang = isTa() ? 'ta' : 'en';
+      el.setAttribute('aria-label', full);
+    });
+    m3.setActions(actions());
+    $('#abProfile')?.setAttribute('aria-haspopup', 'true'); $('#abProfile')?.setAttribute('aria-controls', 'profilePanel'); $('#abProfile')?.setAttribute('aria-expanded', String(!pPanel.hidden));
+  };
+  m3.relabel();
+  $('#langBtn').addEventListener('click', () => setTimeout(m3.relabel));
+}
+if (IOS) {
+  const html = document.documentElement;
   addEventListener('scroll', () => html.classList.toggle('scrolled', scrollY > 4), { passive: true });
   document.body.insertAdjacentHTML('afterbegin', `<header class="appbar" id="appbar">
     <button class="ab-btn" type="button" id="abBack" aria-label="${tr('back')}" hidden>${icon('back')}<span class="ab-back-label">${tr('back')}</span></button>
@@ -1012,35 +1057,13 @@ if (APP) {
   syncAb();
   $('#langBtn').addEventListener('click', () => setTimeout(syncAb));
   $('#abBack').onclick = () => (moved ? history.back() : (location.hash = $('#abBack').dataset.up || '#/'));
-  // Search opens as a full-width search field over the app bar (the Search page).
   $('#abSearch').onclick = () => { if (!location.hash.startsWith('#/search')) location.hash = '#/search'; setTimeout(() => $('#searchInput').focus(), 60); };
-  $('#searchForm').insertAdjacentHTML(IOS ? 'beforeend' : 'afterbegin', `<button type="button" class="ab-btn" id="searchClose" aria-label="${tr('cancel')}" data-cancel="${tr('cancel')}">${icon('back')}</button>`);
+}
+if (APP) {
+  // Search opens as a full-width search field over the app bar (the Search page).
+  const html = document.documentElement;
+  $('#searchForm').insertAdjacentHTML(IOS ? 'beforeend' : 'afterbegin', `<button type="button" class="ab-btn" id="searchClose" aria-label="${tr('cancel')}" data-cancel="${tr('cancel')}">${ANDROID ? KolamM3.icon('arrow_back') : icon('back')}</button>`);
   $('#searchClose').onclick = () => { $('#searchInput').value = ''; html.classList.remove('searching'); moved ? history.back() : (location.hash = '#/'); };
-  // Material ripple on touch (Android only; iOS dims what you press).
-  if (!IOS) document.addEventListener('pointerdown', e => {
-    const t = e.target.closest('button, a.card, .btn, .filter, .tabbar a, .game-card, .tile, .ab-btn, .choice, .name-choice, .mem, .az button');
-    if (!t || t.disabled || calm()) return;
-    const cs = getComputedStyle(t);
-    if (cs.position === 'static') t.style.position = 'relative';
-    if (cs.overflow === 'visible') t.style.overflow = 'hidden';
-    const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
-    const rip = document.createElement('span');
-    rip.className = 'ripple';
-    rip.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
-    t.appendChild(rip); setTimeout(() => rip.remove(), 550);
-  }, { passive: true });
-  // Android's Back button (the shell has @capacitor/app): close search, else go back a screen; the other
-  // main tabs return to Discover; Back on Discover leaves the app.
-  if (window.Capacitor) {
-    const CapApp = window.Capacitor.Plugins?.App;
-    CapApp?.addListener?.('backButton', () => {
-      if (html.classList.contains('searching')) return $('#searchClose').click();
-      const h = location.hash || '#/';
-      if (['#/explore', '#/game', '#/saved', '#/types'].includes(h)) return (location.hash = '#/');
-      if (h !== '#/' && h !== '#') return moved ? history.back() : (location.hash = $('#abBack').dataset.up || '#/');
-      CapApp.exitApp?.();
-    });
-  }
 }
 syncLang();
 route();

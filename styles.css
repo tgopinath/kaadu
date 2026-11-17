@@ -534,67 +534,60 @@ html.app #searchClose { display: grid; }
 .ripple { position: absolute; border-radius: 50%; background: currentColor; opacity: .16; transform: scale(0); animation: ripple .5s ease-out forwards; pointer-events: none; z-index: 5; }
 @keyframes ripple { to { transform: scale(1); opacity: 0; } }
 
-html.android {
-  --sans: Roboto, 'Noto Sans Tamil', system-ui, sans-serif;
-  --m-surface: #0E0E0E; --m-container: #1A1C1A; --m-container-high: #252825; --m-sec-container: #1F4A35; --m-on-sec: #CDE9DB;
-  --m-outline: #8C9389; --m-outline-var: #424840; --m-inverse: #E1E3DC; --m-on-inverse: #2E312D; --tabbar-h: 80px;
-}
-html.android body { background: var(--m-surface); letter-spacing: .01em; padding-bottom: calc(80px + var(--sab)); }
-html.android .appbar { display: flex; align-items: center; gap: 4px; position: sticky; top: 0; z-index: 30; height: calc(64px + var(--sat)); padding: var(--sat) 4px 0; background: var(--m-surface); transition: background .2s; }
-html.android.scrolled .appbar { background: var(--m-container); }
+/* Android: Material Design 3 from the shared Kolam M3 kit (kolam-m3.css builds the app bar, navigation
+   bar, ripple and snackbar). Kaadu's own tokens point at the generated M3 roles and its own components
+   get M3 shapes. Only html.k-android is touched; the website keeps its own look. */
 .ab-btn { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; color: var(--ink); flex-shrink: 0; }
 .ab-btn .k-icon { width: 24px; height: 24px; stroke-width: 2; }
 .ab-btn[hidden] { display: none; }
 .ab-title { flex: 1; min-width: 0; margin: 0 0 0 16px; font: 400 22px/28px var(--sans); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ab-title:lang(ta) { font-size: 19px; }
-.ab-lang { font: 500 15px var(--sans); color: var(--accent); }
-.ab-lang[lang="ta"] { font-family: 'Noto Sans Tamil', var(--sans); font-size: 18px; }
-html.android .ab-back-label { display: none; }
-html.android #abBack { display: none !important; } /* Android: the phone's own Back button goes back */
-html.android.searching .top { background: var(--m-surface); }
-html.android .search { height: 56px; border-radius: 28px; border: 0; background: var(--m-container-high); padding: 0 4px; box-shadow: none; }
-html.android .search > .k-icon { display: none; }
-html.android .search input { font-size: 16px; padding-left: 4px; }
-html.android .h-display { font: 400 28px/36px var(--sans); letter-spacing: 0; }
-html.android .h-section, html.android .shelf-title { font: 500 20px/28px var(--sans); letter-spacing: 0; }
-html.android .eyebrow { font: 500 12px/16px var(--sans); letter-spacing: .5px; color: var(--ink-2); }
-html.android .lede { font-size: 14px; line-height: 20px; }
-html.android .feature { border-radius: 16px; background: var(--m-container); }
-html.android .feature-body .h-display { font: 500 32px/40px var(--sans); }
-html.android .feature-body .btn, html.android .hero-btn { height: 40px; border-radius: 20px; padding: 0 20px; font: 500 14px/20px var(--sans); }
-html.android .card-img, html.android .shelf-track > .card .card-img { border-radius: 12px; }
-html.android .card-name { font: 500 15px/20px var(--sans); }
-html.android .grid { gap: 16px 12px; }
-html.android .tile, html.android .game-card, html.android .quiz-player, html.android .stat, html.android .res-card, html.android .name-photo, html.android .fact { border-radius: 16px; }
-html.android .game-card, html.android .quiz-player, html.android .stat, html.android .res-card { border: 0; background: var(--m-container); }
-html.android .game-card:hover { transform: none; }
-html.android .game-card > b { font: 500 18px/24px var(--sans); }
-html.android .btn { height: 40px; padding: 0 24px; border-radius: 20px; font: 500 14px/20px var(--sans); letter-spacing: .1px; }
-html.android .btn.outline { border: 1px solid var(--m-outline); background: transparent; }
-html.android .name-choice, html.android .choice { border-radius: 12px; border-color: var(--m-outline-var); }
-html.android .say-opt { border-radius: 16px; }
-html.android .az button { border-radius: 8px; border-color: var(--m-outline-var); background: transparent; }
-html.android .az button[aria-pressed="true"] { background: var(--m-sec-container); color: var(--m-on-sec); border-color: transparent; }
-html.android .filter { height: 40px; padding: 0 16px 0 4px; border-radius: 8px; border: 1px solid var(--m-outline-var); background: transparent; font: 500 14px/1 var(--sans); color: var(--ink-2); }
-html.android .filter[aria-current="true"] { background: var(--m-sec-container); border-color: transparent; color: var(--m-on-sec); }
-html.android .filter[aria-current="true"] .fpics img { border-color: var(--m-sec-container); }
-html.android .filters, html.android .az { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
-html.android .seg { border-radius: 20px; border-color: var(--m-outline); padding: 0; overflow: hidden; }
-html.android .seg button { border-radius: 0; min-height: 40px; }
-html.android .seg button[aria-pressed="true"] { background: var(--m-sec-container); color: var(--m-on-sec); }
-/* Navigation bar: 80dp, pill indicator behind the active icon */
-html.android .tabbar { height: calc(80px + var(--sab)); padding: 12px 0 calc(16px + var(--sab)); background: var(--m-container); border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
-html.android .tabbar a { gap: 4px; color: var(--ink-2); font: 500 12px/16px var(--sans); letter-spacing: .3px; justify-content: flex-start; }
-html.android:lang(ta) .tabbar a { font-size: 11px; letter-spacing: 0; }
-html.android .tabbar a:not(.magic) .k-icon { width: 64px; height: 32px; padding: 4px 20px; border-radius: 16px; stroke-width: 1.8; transition: background .2s; }
-html.android .tabbar a[aria-current="page"] { color: var(--ink); font-weight: 700; }
-html.android .tabbar a[aria-current="page"]:not(.magic) .k-icon { background: var(--m-sec-container); color: var(--m-on-sec); stroke-width: 2.2; }
-html.android .tabbar a.magic .magic-orb { width: 40px; height: 40px; margin-top: -8px; box-shadow: 0 0 0 4px var(--m-container), 0 0 18px -2px rgba(196,139,255,.8); }
-/* Snackbar instead of a centred toast */
-html.android .toast { left: 16px; right: 16px; transform: none; width: auto; max-width: none; bottom: calc(88px + var(--sab)); border-radius: 4px; background: var(--m-inverse); color: var(--m-on-inverse); text-align: left; padding: 14px 16px; font: 400 14px/20px var(--sans); }
-@media (prefers-reduced-motion: no-preference) { html.android .toast { animation: snack .2s ease-out; } }
-@keyframes snack { from { opacity: 0; transform: translateY(8px); } }
-html.android :is(a, button):active { -webkit-tap-highlight-color: transparent; }
+html.k-android.android:not(#k-m3) {
+  --sans: var(--md-ref-typeface-plain);
+  --bg: var(--md-sys-color-surface); --surface: var(--md-sys-color-surface-container); --surface-2: var(--md-sys-color-surface-container-high);
+  --ink: var(--md-sys-color-on-surface); --ink-2: var(--md-sys-color-on-surface-variant); --ink-3: var(--md-sys-color-outline); --line: var(--md-sys-color-outline-variant);
+  --accent: var(--md-sys-color-primary); --accent-ink: var(--md-sys-color-on-primary); --accent-soft: var(--md-sys-color-primary-container);
+  --primary: var(--md-sys-color-primary); --on-primary: var(--md-sys-color-on-primary); --primary-soft: var(--md-sys-color-primary-container); --primary-text: var(--md-sys-color-primary);
+  --blue: var(--md-sys-color-primary); --blue-ink: var(--md-sys-color-on-primary);
+  --tabbar-h: 80px;
+}
+html.k-android .md-top-app-bar__title:lang(ta) { font-size: 19px; }
+html.k-android.searching .top { background: var(--md-sys-color-surface); padding-top: var(--md-inset-top); }
+html.k-android .search { height: 56px; border-radius: var(--md-sys-shape-corner-full); border: 0; background: var(--md-sys-color-surface-container-high); padding: 0 4px; box-shadow: none; }
+html.k-android .search > .k-icon { display: none; }
+html.k-android .search input { font: var(--md-sys-typescale-body-large); padding-left: 4px; }
+html.k-android #searchClose { color: var(--md-sys-color-on-surface); }
+html.k-android .h-display { font: var(--md-sys-typescale-headline-medium); letter-spacing: 0; }
+html.k-android :is(.h-section, .shelf-title) { font: var(--md-sys-typescale-title-large); letter-spacing: 0; }
+html.k-android .eyebrow { font: var(--md-sys-typescale-label-medium); letter-spacing: .5px; color: var(--md-sys-color-on-surface-variant); }
+html.k-android .lede { font: var(--md-sys-typescale-body-medium); }
+html.k-android .feature { border-radius: var(--md-sys-shape-corner-large); }
+html.k-android .feature-body .h-display { font: var(--md-sys-typescale-headline-large); }
+html.k-android :is(.feature-body .btn, .hero-btn) { height: 40px; border-radius: var(--md-sys-shape-corner-full); padding: 0 20px; font: var(--md-sys-typescale-label-large); }
+html.k-android :is(.card-img, .shelf-track > .card .card-img) { border-radius: var(--md-sys-shape-corner-medium); }
+html.k-android .card-name { font: var(--md-sys-typescale-title-small); }
+html.k-android :is(.tile, .game-card, .quiz-player, .stat, .res-card, .name-photo, .fact, .say-opt) { border-radius: var(--md-sys-shape-corner-large); }
+html.k-android :is(.game-card, .quiz-player, .stat, .res-card) { border: 0; background: var(--md-sys-color-surface-container); }
+html.k-android .game-card:hover { transform: none; }
+html.k-android .game-card > b { font: var(--md-sys-typescale-title-medium); }
+html.k-android .btn { height: 40px; padding: 0 24px; border-radius: var(--md-sys-shape-corner-full); font: var(--md-sys-typescale-label-large); letter-spacing: .1px; }
+html.k-android .btn.outline { border: 1px solid var(--md-sys-color-outline); background: transparent; color: var(--md-sys-color-primary); }
+html.k-android :is(.name-choice, .choice) { border-radius: var(--md-sys-shape-corner-medium); border-color: var(--md-sys-color-outline-variant); }
+html.k-android .az button { border-radius: var(--md-sys-shape-corner-small); border-color: var(--md-sys-color-outline-variant); background: transparent; }
+html.k-android .az button[aria-pressed="true"] { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-color: transparent; }
+/* Filter chips with a leading photo: 40dp, 8dp corners, secondary container when selected */
+html.k-android .filter { height: 40px; padding: 0 16px 0 4px; border-radius: var(--md-sys-shape-corner-small); border: 0; box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant); background: transparent; font: var(--md-sys-typescale-label-large); line-height: 1; color: var(--md-sys-color-on-surface-variant); }
+html.k-android .filter[aria-current="true"] { background: var(--md-sys-color-secondary-container); box-shadow: none; color: var(--md-sys-color-on-secondary-container); }
+html.k-android .filter[aria-current="true"] .fpics img { border-color: var(--md-sys-color-secondary-container); }
+html.k-android :is(.filters, .az) { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
+/* Segmented buttons */
+html.k-android .seg { border-radius: var(--md-sys-shape-corner-full); border-color: var(--md-sys-color-outline); padding: 0; overflow: hidden; }
+html.k-android .seg button { border-radius: 0; min-height: 40px; }
+html.k-android .seg button[aria-pressed="true"] { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+/* Profile panel: an M3 menu-like surface under the app bar's profile button */
+html.k-android .profile-panel.in-app { top: calc(var(--md-inset-top) + 60px); border: 0; border-radius: var(--md-sys-shape-corner-large); background: var(--md-sys-color-surface-container-high); box-shadow: var(--md-sys-elevation-level2); }
+html.k-android .pp-row .langswitch { display: inline-flex; }
+html.k-android .toast { display: none; } /* the kit's snackbar is used instead */
 
 /* =====================================================================================
    iPhone app mode — Apple Human Interface Guidelines (html.ios: "Kaadu-iOS" app, Home Screen, or ?app=ios)
@@ -717,3 +710,4 @@ html.ios .profile-panel.in-app { top: calc(var(--sat, 0px) + 48px); }
 html.app .pp-row .langswitch { display: inline-flex; }
 .ab-profile .k-icon { width: 24px; height: 24px; }
 html.ios .appbar .ab-profile { grid-column: 3; grid-row: 1; justify-self: end; }
+html.k-android.searching .top .profile { display: none; } /* the app bar's profile action is the one in the app */
