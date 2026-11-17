@@ -43,18 +43,15 @@ const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ---------------------------------------------------------------- app modes
 // Android app (Capacitor shell, Android WebView or Chrome's installed app): Material Design 3 from the shared
 // Kolam M3 kit (kolam-m3.js sets html.k-android; ?app=android / ?app=web force it on / off for this tab).
-// iPhone app (user agent "Kaadu-iOS", or added to the Home Screen): this file's own Apple HIG bar (?app=ios).
-const APP = (() => {
-  try { const m = location.search.match(/[?&]app=(android|ios|web)/); if (m) localStorage.setItem('kd.appmode', JSON.stringify(m[1] === 'ios' ? 'ios' : false)); } catch {}
-  if (store.get('kd.appmode', null) === 'ios') return 'ios';
-  if (window.KolamM3?.isAndroid) return 'android';
-  const ua = navigator.userAgent, standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  if (/Kaadu-iOS/.test(ua) || (standalone && /iPhone|iPad/.test(ua))) return 'ios';
-  return false;
-})();
+// iPhone app (Kaadu-iOS shell, Home Screen web app, or ?app=ios): Apple HIG from the shared Kolam iOS kit
+// (kolam-ios.js sets html.k-ios). In a normal browser neither kit does anything.
+try { localStorage.removeItem('kd.appmode'); } catch {} // the old hand-written iOS mode's switch
+const APP = window.KolamIOS && (KolamIOS.isIOS || KolamIOS.detect(['Kaadu-iOS'])) ? 'ios' : window.KolamM3?.isAndroid ? 'android' : false;
 const IOS = APP === 'ios', ANDROID = APP === 'android';
+if (IOS) document.documentElement.classList.remove('k-android', 'k-app');
 // Haptics: the iPhone app's native bridge, or the Android kit (Capacitor Haptics / vibrate).
 const haptic = kind => {
+  if (IOS) return KolamIOS.haptic(kind || 'light');
   if (ANDROID) return KolamM3.haptic(kind === 'success' ? 'medium' : kind === 'error' ? 'heavy' : 'light');
   try { window.webkit?.messageHandlers?.haptic?.postMessage(kind || 'light'); } catch {}
 };
@@ -888,7 +885,7 @@ async function viewDetail({ plant: p, id }) {
   const wikiEl = $('#wiki');
   if (w?.text) {
     wikiEl.innerHTML = `<p class="d-wiki"${wTa ? ' lang="ta"' : ''}>${esc(w.text)}</p>`;
-    if (w.url) $('#wikiBtn').outerHTML = `<a class="hero-btn" href="${w.url}" target="_blank" rel="noopener">${icon('book')}<span>${tr('wikipedia')}</span></a>`;
+    if (w.url && $('#wikiBtn')) $('#wikiBtn').outerHTML = `<a class="hero-btn" href="${w.url}" target="_blank" rel="noopener">${icon('book')}<span>${tr('wikipedia')}</span></a>`;
     src.push(`${tr('src_wiki')}: <a href="${w.url}" target="_blank" rel="noopener">${wTa ? 'Tamil ' : ''}Wikipedia</a>`);
   } else wikiEl.innerHTML = p && isTa() ? `<p class="d-bio">${esc(p.about)}</p>` : '';
   $('#srcLine').innerHTML = src.join(' · ');
@@ -921,7 +918,7 @@ function step(dir, dx) {
 }
 
 // ---------------------------------------------------------------- routing
-function setTab(tab) { m3?.setActive?.(tab || null); document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')); }
+function setTab(tab) { m3?.setActive?.(tab || null); if (IOS && tab) KolamIOS.tabBar.select(tab); document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')); }
 function route({ keep = false } = {}) {
   route.current = location.hash || '';
   io?.disconnect(); io = null;
@@ -939,7 +936,7 @@ function route({ keep = false } = {}) {
   // The app bar's title and where its Back goes (main tabs have none); plant and branch pages set their own name.
   const game = gameByKey[b];
   const ab = { '': ['Kaadu'], g: [groupByKey[b] ? gLabel(groupByKey[b]) : 'Kaadu', '#/', true], types: [tr('nav_groups')], saved: [tr('my_list')],
-    search: [tr('search_title'), '#/'], explore: [tr('nav_tree'), b ? '#/explore' : null], game: [game ? tr(game.t) : tr('games_title'), game ? '#/game' : null],
+    search: [tr('search_title'), IOS ? null : '#/'], explore: [tr('nav_tree'), b ? '#/explore' : null], game: [game ? tr(game.t) : tr('games_title'), game ? '#/game' : null],
     p: [byKey[b] ? nm(byKey[b]) : '', lastList, !!(byKey[b] && hasTa(byKey[b]))], t: ['', lastList] }[a || ''] || ['Kaadu'];
   appBar(ab[0], ab[1] || null, ab[2] && isTa());
   document.documentElement.classList.toggle('searching', !!APP && a === 'search');
@@ -1001,14 +998,15 @@ function appBar(title, up, ta) {
     if (up) m3.setBack(up); // where Back goes when the page was opened on a deep link
     return;
   }
-  const t = $('#abTitle'); t.textContent = title; ta ? t.setAttribute('lang', 'ta') : t.removeAttribute('lang');
-  $('#abBack').hidden = !up; if (up) $('#abBack').dataset.up = up;
-  // iOS shows where Back goes ("‹ Discover"); a long name falls back to "Back".
+  // iPhone: large title on the main tabs; Back + centred title below them (the back label says where it goes).
   const upName = up && ({ '#/': tr('nav_home'), '#/explore': tr('nav_tree'), '#/game': tr('games_title'), '#/types': tr('nav_groups'), '#/saved': tr('my_list') }[up] || tr('back'));
-  $('#abBack .ab-back-label').textContent = upName && upName.length <= 14 ? upName : tr('back');
-  document.documentElement.classList.toggle('root', !up);
+  const actions = [{ id: 'abProfile', icon: icon('user', 'ios-icon'), label: tr('profile') }];
+  if (up) KolamIOS.navBar.set({ title, back: { label: upName, onClick: () => (moved && history.length > 1 ? history.back() : (location.hash = up)) }, actions, keepTitle: true });
+  else KolamIOS.navBar.set({ title, large: true, actions, keepTitle: true });
+  document.querySelectorAll('.ios-navbar-title, .ios-largetitle').forEach(e => (ta ? e.setAttribute('lang', 'ta') : e.removeAttribute('lang')));
+  const pb = $('#abProfile'); pb.setAttribute('aria-haspopup', 'true'); pb.setAttribute('aria-controls', 'profilePanel'); pb.setAttribute('aria-expanded', String(!pPanel.hidden));
 }
-if (APP) document.documentElement.classList.add('app', APP);
+if (APP) document.documentElement.classList.add('app');
 if (ANDROID) {
   // App bar, navigation bar, ripples, snackbar and Back come from the kit. No back arrow in the bar:
   // the phone's own Back button goes back (Back on another main tab returns to Discover, then leaves).
@@ -1045,19 +1043,25 @@ if (ANDROID) {
   $('#langBtn').addEventListener('click', () => setTimeout(m3.relabel));
 }
 if (IOS) {
-  const html = document.documentElement;
-  addEventListener('scroll', () => html.classList.toggle('scrolled', scrollY > 4), { passive: true });
-  document.body.insertAdjacentHTML('afterbegin', `<header class="appbar" id="appbar">
-    <button class="ab-btn" type="button" id="abBack" aria-label="${tr('back')}" hidden>${icon('back')}<span class="ab-back-label">${tr('back')}</span></button>
-    <h1 class="ab-title" id="abTitle">Kaadu</h1>
-    <button class="ab-btn" type="button" id="abSearch" aria-label="${tr('search_label')}">${icon('search')}</button>
-    <button class="ab-btn ab-profile" type="button" id="abProfile" aria-haspopup="true" aria-expanded="false" aria-controls="profilePanel">${icon('user')}</button>
-  </header>`);
-  const syncAb = () => { $('#abProfile').setAttribute('aria-label', tr('profile')); $('#abSearch').setAttribute('aria-label', tr('search_label')); $('#abBack').setAttribute('aria-label', tr('back')); };
-  syncAb();
-  $('#langBtn').addEventListener('click', () => setTimeout(syncAb));
-  $('#abBack').onclick = () => (moved ? history.back() : (location.hash = $('#abBack').dataset.up || '#/'));
-  $('#abSearch').onclick = () => { if (!location.hash.startsWith('#/search')) location.hash = '#/search'; setTimeout(() => $('#searchInput').focus(), 60); };
+  // Navigation bar, tab bar (4 tabs + the trailing Search tab, as in iOS 26), sheets and haptics from the kit.
+  const keys = { home: 'nav_home', explore: 'nav_explore', game: 'nav_games', saved: 'my_list', search: 'nav_search' };
+  const ic = { home: 'house', explore: icon('branch', 'ios-icon'), game: 'sparkles', saved: 'bookmark', search: 'magnifyingglass' };
+  const href = { home: '#/', explore: '#/explore', game: '#/game', saved: '#/saved', search: '#/search' };
+  KolamIOS.init({
+    appName: 'Kaadu', uaTokens: ['Kaadu-iOS'], tint: { light: '#1D6B45', dark: '#7CC6A3', onDark: '#0E0E0E' },
+    navBar: { title: 'Kaadu', large: true },
+    tabs: Object.keys(keys).map(id => ({ id, label: tr(keys[id]), icon: ic[id], href: href[id], role: id === 'search' ? 'search' : undefined })),
+    currentTab: 'home',
+  });
+  // The search field sits under the bar on the Search tab, like an iOS search controller.
+  const lt = document.querySelector('.ios-largetitle'); lt.after($('#searchForm'));
+  const relabel = () => {
+    const shortTa = { game: 'ஆட்டம்', saved: 'பட்டியல்' };
+    document.querySelectorAll('.ios-tab').forEach(el => { const s = el.querySelector('span'), full = tr(keys[el.dataset.tab]); s.textContent = (isTa() && shortTa[el.dataset.tab]) || full; s.lang = isTa() ? 'ta' : 'en'; el.setAttribute('aria-label', full); });
+    document.querySelector('.ios-tabbar-search')?.setAttribute('aria-label', tr('nav_search'));
+  };
+  relabel();
+  $('#langBtn').addEventListener('click', () => setTimeout(relabel));
 }
 if (APP) {
   // Search opens as a full-width search field over the app bar (the Search page).

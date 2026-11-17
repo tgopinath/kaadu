@@ -590,73 +590,55 @@ html.k-android .pp-row .langswitch { display: inline-flex; }
 html.k-android .toast { display: none; } /* the kit's snackbar is used instead */
 
 /* =====================================================================================
-   iPhone app mode — Apple Human Interface Guidelines (html.ios: "Kaadu-iOS" app, Home Screen, or ?app=ios)
+   iPhone app mode — Apple Human Interface Guidelines, from the shared Kolam iOS kit (html.k-ios: inside the
+   Kaadu-iOS app, a Home Screen web app, or ?app=ios). kolam-ios.css builds the navigation bar (large titles,
+   Back + centred title), the Liquid Glass tab bar with the trailing Search tab, sheets and banners; here
+   Kaadu's own components get iOS shapes. Kaadu is a dark app, so the kit runs in its dark appearance.
    ===================================================================================== */
-html.ios {
-  --sans: -apple-system, 'SF Pro Text', 'Inter', 'Noto Sans Tamil', system-ui, sans-serif;
-  --i-tint: #7CC6A3; --i-label2: rgba(235,235,245,.6); --i-sep: rgba(84,84,88,.65); --i-fill: rgba(118,118,128,.24); --i-bar: rgba(18,18,18,.82); --tabbar-h: 49px;
-}
-html.ios body { letter-spacing: -.01em; padding-bottom: calc(49px + var(--sab)); -webkit-user-select: none; user-select: none; }
-html.ios .appbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; position: sticky; top: 0; z-index: 30; height: calc(44px + var(--sat)); padding: var(--sat) 8px 0; background: var(--i-bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); box-shadow: 0 .5px 0 var(--i-sep); }
-html.ios .appbar .ab-btn { width: auto; min-width: 44px; height: 44px; border-radius: 0; color: var(--i-tint); display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
-html.ios .appbar .ab-btn .k-icon { width: 22px; height: 22px; stroke-width: 2.2; }
-html.ios #abBack { grid-column: 1; grid-row: 1; justify-self: start; font: 400 17px var(--sans); padding-right: 6px; white-space: nowrap; }
-html.ios #abBack .k-icon { width: 24px; height: 24px; stroke-width: 2.6; margin-left: -4px; }
-html.ios .ab-title { grid-column: 2; grid-row: 1; margin: 0; max-width: 56vw; font: 600 17px/22px var(--sans); text-align: center; }
-html.ios #abSearch { grid-column: 3; grid-row: 1; justify-self: end; margin-right: 44px; }
-html.ios .ab-lang { grid-column: 3; grid-row: 1; justify-self: end; font: 600 16px var(--sans); }
-html.ios .ab-lang[lang="ta"] { font-size: 18px; }
-/* Main tabs use a large title (34pt bold) under the bar */
-html.ios.root .appbar { height: calc(96px + var(--sat)); grid-template-rows: 44px 52px; box-shadow: none; }
-html.ios.root .ab-title { grid-column: 1 / -1; grid-row: 2; justify-self: start; max-width: none; padding-left: 8px; font: 700 34px/41px var(--sans); letter-spacing: .01em; }
-html.ios.root .ab-title:lang(ta) { font-size: 28px; }
-html.ios.root.scrolled .appbar { box-shadow: 0 .5px 0 var(--i-sep); }
-html.ios.searching .top { background: var(--i-bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); }
-html.ios.searching .top-inner { padding: 6px 8px 8px; }
-html.ios .search { height: 36px; border-radius: 10px; border: 0; background: var(--i-fill); padding: 0 4px 0 8px; box-shadow: none; }
-html.ios .search input { font-size: 17px; }
-html.ios #searchClose { order: 9; width: auto; padding: 0 8px; color: var(--i-tint); height: 44px; display: inline-flex; align-items: center; }
-html.ios #searchClose .k-icon { display: none; }
-html.ios #searchClose::after { content: attr(data-cancel); font: 400 17px var(--sans); white-space: nowrap; }
-html.ios .h-display { font: 700 28px/34px var(--sans); letter-spacing: .01em; }
-html.ios .h-section, html.ios .shelf-title { font: 700 22px/28px var(--sans); }
-html.ios .eyebrow { font: 600 13px/18px var(--sans); letter-spacing: -.01em; text-transform: uppercase; color: var(--i-label2); }
-html.ios .lede { font-size: 15px; line-height: 20px; color: var(--i-label2); }
-html.ios .card-img, html.ios .shelf-track > .card .card-img { border-radius: 12px; }
-html.ios .card-name { font: 600 16px/21px var(--sans); }
-html.ios .feature, html.ios .quiz-player, html.ios .game-card, html.ios .stat, html.ios .res-card, html.ios .tile, html.ios .name-photo { border-radius: 14px; border: 0; }
-html.ios .quiz-player, html.ios .game-card, html.ios .stat, html.ios .res-card { background: var(--surface); }
-html.ios .game-card:hover { transform: none; }
-html.ios .game-card > b { font: 600 19px/24px var(--sans); }
-html.ios .btn, html.ios .feature-body .btn, html.ios .hero-btn { height: 44px; padding: 0 18px; border-radius: 12px; font: 600 17px/22px var(--sans); }
-html.ios .btn.outline { border: 0; background: var(--i-fill); color: var(--i-tint); }
-html.ios .feature-body .btn.outline, html.ios .hero-btn { color: #fff; }
-html.ios .name-choice, html.ios .choice { border: 0; border-radius: 12px; }
-html.ios .say-opt { border-radius: 12px; }
-html.ios .filter { height: 40px; padding: 0 14px 0 4px; border-radius: 20px; border: 0; background: var(--i-fill); font: 500 15px/1 var(--sans); color: var(--ink); }
-html.ios .filter[aria-current="true"] { background: var(--i-tint); color: #0E0E0E; }
-html.ios .filter .fpics img { border-color: transparent; border-radius: 50%; }
-html.ios .az button { border: 0; border-radius: 10px; background: var(--i-fill); }
-html.ios .az button[aria-pressed="true"] { background: var(--i-tint); color: #0E0E0E; }
-html.ios .seg { border: 0; background: var(--i-fill); border-radius: 9px; padding: 2px; }
-html.ios .seg button { border-radius: 7px; min-height: 32px; }
-html.ios .seg button[aria-pressed="true"] { background: #636366; color: #fff; }
-html.ios .fact { border-radius: 12px; }
-html.ios .filters, html.ios .az { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
-/* Tab bar: 49pt, translucent, icon over a 10pt label, tint colour for the selected tab */
-html.ios .tabbar { height: calc(49px + var(--sab)); padding: 2px 0 var(--sab); background: var(--i-bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border: 0; box-shadow: 0 -.5px 0 var(--i-sep); }
-html.ios .tabbar a { gap: 1px; color: rgba(150,150,150,.95); font: 500 10px/12px var(--sans); letter-spacing: .01em; }
-html.ios:lang(ta) .tabbar a { font-size: 9.5px; letter-spacing: 0; }
-html.ios .tabbar a:not(.magic) .k-icon { width: 26px; height: 26px; stroke-width: 1.8; }
-html.ios .tabbar a[aria-current="page"] { color: var(--i-tint); }
-html.ios .tabbar a[aria-current="page"] .k-icon { stroke-width: 2.2; }
-html.ios .tabbar a.magic .magic-orb { width: 34px; height: 34px; margin-top: -4px; box-shadow: 0 0 0 3px rgba(18,18,18,.9), 0 0 14px -2px rgba(196,139,255,.8); }
-html.ios .tabbar a.magic .magic-orb .k-icon { width: 18px; height: 18px; }
-html.ios .toast { bottom: calc(60px + var(--sab)); border-radius: 14px; background: rgba(44,44,46,.92); color: #fff; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); font: 500 15px var(--sans); }
+html.k-ios.searching .top { display: none; }
+html.k-ios .tabbar { display: none !important; }          /* the kit's tab bar replaces the website's */
+html.k-ios body { letter-spacing: -.01em; padding-bottom: var(--ios-tabbar-space); }
+html.k-ios main { padding-top: 0; }
+html.k-ios:not(.searching) #searchForm { display: none; }
+html.k-ios #searchForm { position: sticky; top: calc(54px + var(--sat)); z-index: 35; display: flex; gap: 8px; align-items: center; height: 44px; margin: 0 16px 12px; padding: 0 4px 0 12px; border: 0; border-radius: 999px; background: var(--ios-fill3); box-shadow: none; }
+html.k-ios #searchForm input { font: 400 17px/22px var(--ios-font); color: var(--ios-label); background: none; border: 0; }
+html.k-ios #searchForm input::placeholder { color: var(--ios-placeholder); }
+html.k-ios #searchClose { order: 9; width: auto; padding: 0 12px; color: var(--ios-tint); height: 44px; display: inline-flex; align-items: center; background: none; border: 0; }
+html.k-ios #searchClose .k-icon { display: none; }
+html.k-ios #searchClose::after { content: attr(data-cancel); font: 400 17px var(--ios-font); white-space: nowrap; }
+html.k-ios.searching main { padding-top: 0; }
+html.k-ios .h-display { font: 700 28px/34px var(--ios-font-display); letter-spacing: .01em; }
+html.k-ios .h-section, html.k-ios .shelf-title { font: 700 22px/28px var(--ios-font-display); letter-spacing: -.012em; }
+html.k-ios .eyebrow { font: 600 13px/18px var(--ios-font); letter-spacing: -.01em; text-transform: uppercase; color: var(--ios-label2); }
+html.k-ios .lede { font-size: 15px; line-height: 20px; color: var(--ios-label2); }
+html.k-ios .card-img, html.k-ios .shelf-track > .card .card-img { border-radius: 14px; }
+html.k-ios .card-name { font: 600 16px/21px var(--ios-font); }
+html.k-ios .feature, html.k-ios .quiz-player, html.k-ios .game-card, html.k-ios .stat, html.k-ios .res-card, html.k-ios .tile, html.k-ios .name-photo { border-radius: var(--ios-radius-card); border: 0; }
+html.k-ios .quiz-player, html.k-ios .game-card, html.k-ios .stat, html.k-ios .res-card { background: var(--ios-grouped2); }
+html.k-ios .game-card:hover { transform: none; }
+html.k-ios .game-card > b { font: 600 19px/24px var(--ios-font); }
+html.k-ios .btn, html.k-ios .feature-body .btn, html.k-ios .hero-btn { height: 44px; padding: 0 20px; border-radius: 999px; font: 600 17px/22px var(--ios-font); }
+html.k-ios .btn.outline { border: 0; background: var(--ios-fill3); color: var(--ios-tint); }
+html.k-ios .feature-body .btn.outline, html.k-ios .hero-btn { color: #fff; }
+html.k-ios .name-choice, html.k-ios .choice { border: 0; border-radius: 16px; }
+html.k-ios .say-opt { border-radius: 999px; }
+html.k-ios .filter { height: 40px; padding: 0 14px 0 4px; border-radius: 999px; border: 0; background: var(--ios-fill3); font: 500 15px/1 var(--ios-font); color: var(--ios-label); }
+html.k-ios .filter[aria-current="true"] { background: var(--ios-tint-fill); color: var(--ios-on-tint); }
+html.k-ios .filter .fpics img { border-color: transparent; border-radius: 50%; }
+html.k-ios .az button { border: 0; border-radius: 999px; background: var(--ios-fill3); }
+html.k-ios .az button[aria-pressed="true"] { background: var(--ios-tint-fill); color: var(--ios-on-tint); }
+/* Segmented control */
+html.k-ios .seg { border: 0; background: var(--ios-fill3); border-radius: 999px; padding: 2px; }
+html.k-ios .seg button { border-radius: 999px; min-height: 32px; font: 500 13px/1.2 var(--ios-font); }
+html.k-ios .seg button[aria-pressed="true"] { background: #636366; color: #fff; font-weight: 600; }
+html.k-ios .fact { border-radius: 16px; }
+html.k-ios .filters, html.k-ios .az { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
+html.k-ios .toast { bottom: calc(var(--ios-tabbar-space) + 8px); border-radius: 999px; background: var(--ios-glass-strong); color: var(--ios-label); -webkit-backdrop-filter: var(--ios-glass-filter); backdrop-filter: var(--ios-glass-filter); box-shadow: var(--ios-glass-shade); font: 500 15px var(--ios-font); }
+/* Profile panel: a menu-like glass panel under the bar's profile button */
+html.k-ios .profile-panel.in-app { top: calc(var(--sat, 0px) + 58px); border: 0; border-radius: var(--ios-radius-menu); background: var(--ios-glass-strong); -webkit-backdrop-filter: var(--ios-glass-filter); backdrop-filter: var(--ios-glass-filter); box-shadow: var(--ios-glass-shade); }
 /* iOS press feedback: dim instead of a ripple */
-html.ios :is(a, button, .card) { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
-html.ios :is(button, .btn, .filter, .tabbar a, .game-card, .choice, .name-choice, .tile):active { opacity: .55; transition: opacity 0s; }
-html.ios a.card:active .card-img { opacity: .7; }
+html.k-ios :is(button, .btn, .filter, .game-card, .choice, .name-choice, .tile):active { opacity: .55; transition: opacity 0s; }
+html.k-ios a.card:active .card-img { opacity: .7; }
 @media (max-width: 760px) { .tol-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .tol-grid .tile { aspect-ratio: 4 / 5; padding: 12px; } .tol-grid .tile b { font-size: 16px; } }
 @media (max-width: 760px) {
   .quiz-top { gap: 10px; } .qprog { margin-top: 10px; gap: 10px; } .qprog small { display: none; }
@@ -668,7 +650,6 @@ html.ios a.card:active .card-img { opacity: .7; }
 @media (max-width: 760px) { .nf .thumbs { margin: 12px 0 0; } } /* the gallery is already full-bleed on phones */
 html.app .nf .hero-acts { opacity: 1; transform: none; } /* always shown in the apps (touch) */
 html.app .page-head .title-row .say-name { display: none; } /* its title moved to the app bar */
-html.ios.searching main { padding-top: 60px; }
 
 /* Games: a "Did you know?" card after every answer */
 .did-know { display: flex; gap: 14px; align-items: flex-start; margin: 14px 0 4px; padding: 14px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); }
@@ -706,8 +687,6 @@ html.ios.searching main { padding-top: 60px; }
 @media (max-width: 520px) { .profile-panel { position: fixed; top: auto; bottom: calc(var(--tabbar-h) + 12px + env(safe-area-inset-bottom)); right: 16px; left: 16px; width: auto; max-width: none; } }
 /* In the apps the profile panel hangs under the app bar's profile button */
 .profile-panel.in-app { position: fixed; top: calc(var(--sat, 0px) + 60px); right: 12px; left: auto; bottom: auto; width: min(320px, calc(100vw - 24px)); }
-html.ios .profile-panel.in-app { top: calc(var(--sat, 0px) + 48px); }
 html.app .pp-row .langswitch { display: inline-flex; }
 .ab-profile .k-icon { width: 24px; height: 24px; }
-html.ios .appbar .ab-profile { grid-column: 3; grid-row: 1; justify-self: end; }
 html.k-android.searching .top .profile { display: none; } /* the app bar's profile action is the one in the app */
