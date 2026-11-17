@@ -16,3 +16,5 @@ python3 -m http.server 5300
 and open http://localhost:5300 (or use the `kaadu` launch config).
 
 `tools/resolve-ids.py` looks up the iNaturalist taxon ID for every scientific and group name in `data.js` and writes `ids.js`. Run it after adding plants or groups.
+
+Architecture: see [ARCHITECTURE.md](ARCHITECTURE.md).
