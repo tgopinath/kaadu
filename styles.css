@@ -745,3 +745,23 @@ html.k-android.searching .top .profile { display: none; } /* the app bar's profi
 .topnav a.magic .k-icon { width: 18px; height: 18px; color: var(--accent); }
 .tabbar a.magic .magic-orb { background: linear-gradient(135deg, #7CC6A3, #4A7DF0); box-shadow: 0 0 0 4px var(--bg), 0 6px 18px -6px rgba(74,125,240,.8); }
 .tabbar a.magic .magic-orb .k-icon { width: 24px; height: 24px; color: #fff; filter: none; }
+
+/* Plant page: details (Wikipedia, fact tiles, plant types, sources) open on demand, in place */
+.d-more { margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.d-more > summary { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 16px; cursor: pointer; list-style: none; border-radius: 10px; }
+.d-more > summary::-webkit-details-marker { display: none; }
+.d-more > summary:hover { background: var(--surface-2); }
+.d-more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.d-more-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; flex: none; }
+.d-more-label .k-icon { width: 18px; height: 18px; color: var(--accent); }
+.d-more-peek { display: flex; flex-wrap: wrap; gap: 4px 14px; min-width: 0; font-size: 14px; color: var(--ink-2); }
+.d-more-peek span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.d-more-peek .k-icon { width: 15px; height: 15px; color: var(--ink-3); }
+.d-more-chev { margin-left: auto; flex: none; color: var(--ink-2); transition: transform .2s; }
+.d-more[open] .d-more-chev { transform: rotate(180deg); }
+.d-more[open] .d-more-peek { visibility: hidden; }
+.d-more-body { padding: 0 16px 16px; }
+.d-more-body .d-wiki { margin-top: 4px; }
+@media (prefers-reduced-motion: no-preference) { .d-more[open] .d-more-body { animation: dm-in .25s ease-out; } }
+@keyframes dm-in { from { opacity: 0; transform: translateY(-4px); } }
+@media (max-width: 520px) { .d-more-peek { display: none; } }

@@ -2,3 +2,4 @@
 .shots-*/
 .vercel
 node_modules
+.tts-*/

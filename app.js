@@ -130,19 +130,43 @@ function toggleSave(item) {
 // ---------------------------------------------------------------- saying a name aloud
 // A blue speaker beside every name says it (English or Tamil voice), like Zoorassic Park.
 let speakingBtn = null;
-function say(text, btn, ta) {
-  if (!('speechSynthesis' in window)) return toast(tr('no_voice'));
-  speechSynthesis.cancel(); speakingBtn?.classList.remove('speaking');
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = ta ? 'ta-IN' : 'en-IN';
-  const v = speechSynthesis.getVoices().find(v => v.lang.replace('_', '-').startsWith(u.lang)) || speechSynthesis.getVoices().find(v => v.lang.startsWith(ta ? 'ta' : 'en'));
-  if (v) u.voice = v;
-  u.rate = .9;
-  speakingBtn = btn; btn?.classList.add('speaking');
-  u.onend = u.onerror = () => btn?.classList.remove('speaking');
-  speechSynthesis.speak(u);
+// Recorded clips (tools/voice-audio.mjs: Tara for English, Vani for Tamil) cover library names, plant
+// types and game questions, so they sound the same on every phone; anything else uses the device's best voice.
+let VOICE_MAP = null, clipAudio = null;
+fetch('audio/voice.json').then(r => r.json()).then(m => { VOICE_MAP = m; }).catch(() => {});
+const normSay = s => String(s).trim().toLowerCase().replace(/\s+/g, ' ');
+function bestVoice(tag) {
+  const base = tag.slice(0, 2);
+  const score = v => {
+    const l = v.lang.replace('_', '-');
+    let n = l === tag ? 40 : l.startsWith(base) ? 20 : -100;
+    if (/natural|neural|premium|enhanced|siri|google|wavenet|online/i.test(v.name)) n += 30;
+    if (/compact|espeak|eloquence|novelty|bad news|bells|bubbles|jester|organ|trinoids|whisper|zarvox|wobble|boing|bahh|cellos|superstar|grandpa|grandma/i.test(v.name)) n -= 60;
+    return n;
+  };
+  return speechSynthesis.getVoices().map(v => [score(v), v]).filter(x => x[0] > 0).sort((x, y) => y[0] - x[0])[0]?.[1] || null;
 }
-const speak = (text, ta = isTa()) => { if ('speechSynthesis' in window) say(text, null, ta); };
+function stopVoice() { window.speechSynthesis?.cancel(); clipAudio?.pause(); clipAudio = null; speakingBtn?.classList.remove('speaking'); }
+function say(text, btn, ta) {
+  stopVoice();
+  speakingBtn = btn; btn?.classList.add('speaking');
+  const done = () => btn?.classList.remove('speaking');
+  const tts = () => {
+    if (!('speechSynthesis' in window)) { done(); return toast(tr('no_voice')); }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = ta ? 'ta-IN' : 'en-IN';
+    const v = bestVoice(u.lang); if (v) { u.voice = v; u.lang = v.lang; }
+    u.rate = .95; u.pitch = 1;
+    u.onend = u.onerror = done;
+    speechSynthesis.speak(u);
+  };
+  const file = VOICE_MAP?.[ta ? 'ta' : 'en']?.[normSay(text)];
+  if (!file) return tts();
+  const a = clipAudio = new Audio(`audio/${file}`);
+  a.onended = done; a.onerror = () => { if (clipAudio === a) tts(); };
+  a.play().catch(err => { if (clipAudio === a && err.name !== 'NotAllowedError') tts(); else done(); });
+}
+const speak = (text, ta = isTa()) => say(text, null, ta);
 const sayBtn = (name, ta, cls = 'say-name') => `<button class="${cls}" type="button" data-say="${esc(name)}"${ta ? ' data-ta="1"' : ''} aria-label="${esc(tr('say_name', { name }))}" title="${esc(tr('say_name', { name }))}">${icon('speak')}</button>`;
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-say]'); if (!b) return;
@@ -159,7 +183,7 @@ if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
     const a = e.target.closest('a.card'); if (!a || a.contains(e.relatedTarget)) return;
     clearTimeout(hoverSay); hoverSay = setTimeout(() => a.matches(':hover') && say(a.dataset.n, null, !!a.dataset.nta), 350);
   });
-  document.addEventListener('pointerout', e => { const a = e.target.closest('a.card'); if (a && !a.contains(e.relatedTarget)) { clearTimeout(hoverSay); speechSynthesis?.cancel(); } });
+  document.addEventListener('pointerout', e => { const a = e.target.closest('a.card'); if (a && !a.contains(e.relatedTarget)) { clearTimeout(hoverSay); stopVoice(); } });
 }
 
 // ---------------------------------------------------------------- cards
@@ -617,7 +641,7 @@ function wireAnswers(mode, sel, isRight, onRight, again) {
   let done = false;
   app.querySelectorAll(sel).forEach(c => c.onclick = () => {
     if (done) return;
-    done = true; window.speechSynthesis?.cancel();
+    done = true; stopVoice();
     const ok = isRight(c) ? c : [...app.querySelectorAll(sel)].find(isRight), right = ok === c;
     ok?.classList.add('right'); if (!right) { c.classList.add('wrong'); ok?.classList.add('reveal'); flop(c); } else celebrate(c);
     app.querySelectorAll(sel).forEach(x => x !== c && x !== ok && x.classList.add('dim'));
@@ -863,17 +887,22 @@ async function viewDetail({ plant: p, id }) {
       </div>
       <div class="d-body">
         ${p && !isTa() ? `<p class="d-bio">${esc(p.about)}</p>` : ''}
-        <div id="wiki">${p && !isTa() ? '' : '<div class="skeleton sk-line" style="width:90%"></div><div class="skeleton sk-line"></div>'}</div>
-        <dl class="facts">
-          ${fact('family', 'f_family', fam)}
-          ${fact('ruler', 'f_height', p?.h)}
-          ${fact('pin', 'f_habitat', p?.hab)}
-          ${fact('globe', 'f_native', p?.nat)}
-          ${p?.uses ? `<div class="fact fact-fun"><span class="fact-ico">${icon('hand')}</span><dt class="sr-only">${tr('f_uses')}</dt><dd>${esc(p.uses)}</dd></div>` : ''}
-          ${fact('eye', 'records', obs)}
-        </dl>
-        ${forms.length ? `<div class="forms" aria-label="${tr('f_form')}">${forms.map(f => `<a href="#/g/${f}"${langAttr()}>${icon('f-' + f)}${esc(gLabel(groupByKey[f]))}</a>`).join('')}</div>` : ''}
-        <p class="source" id="srcLine"></p>
+        <details class="d-more" id="dMore">
+          <summary><span class="d-more-label">${icon('info')}${tr('details')}</span><span class="d-more-peek">${[['ruler', p?.h], ['family', fam], ['globe', p?.nat]].filter(x => x[1]).map(([i, v]) => `<span>${icon(i)}${esc(v)}</span>`).join('')}</span>${icon('chev', 'k-icon d-more-chev')}</summary>
+          <div class="d-more-body">
+  <div id="wiki">${p && !isTa() ? '' : '<div class="skeleton sk-line" style="width:90%"></div><div class="skeleton sk-line"></div>'}</div>
+          <dl class="facts">
+            ${fact('family', 'f_family', fam)}
+            ${fact('ruler', 'f_height', p?.h)}
+            ${fact('pin', 'f_habitat', p?.hab)}
+            ${fact('globe', 'f_native', p?.nat)}
+            ${p?.uses ? `<div class="fact fact-fun"><span class="fact-ico">${icon('hand')}</span><dt class="sr-only">${tr('f_uses')}</dt><dd>${esc(p.uses)}</dd></div>` : ''}
+            ${fact('eye', 'records', obs)}
+          </dl>
+          ${forms.length ? `<div class="forms" aria-label="${tr('f_form')}">${forms.map(f => `<a href="#/g/${f}"${langAttr()}>${icon('f-' + f)}${esc(gLabel(groupByKey[f]))}</a>`).join('')}</div>` : ''}
+          <p class="source" id="srcLine"></p>
+          </div>
+        </details>
       </div>
     </article>
     ${alike.length ? shelf(tr('more_like'), alike.map(plantCard).join('')) : ''}`;
@@ -1014,7 +1043,7 @@ function setTab(tab) { m3?.setActive?.(tab || null); if (IOS && tab) KolamIOS.ta
 function route({ keep = false } = {}) {
   route.current = location.hash || '';
   io?.disconnect(); io = null;
-  window.speechSynthesis?.cancel(); clearTimeout(announceTimer); clearTimeout(autoNextTimer);
+  stopVoice(); clearTimeout(announceTimer); clearTimeout(autoNextTimer);
   if (pendingSay) { const t = pendingSay; pendingSay = null; setTimeout(() => say(t.n, null, t.ta), 80); }
   let h = location.hash.slice(1) || '/';
   try { h = decodeURIComponent(h); } catch {}
