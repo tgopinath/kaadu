@@ -150,14 +150,26 @@ document.addEventListener('click', e => {
   say(b.dataset.say, b, !!b.dataset.ta);
 }, true);
 
+// Cards say their plant's name: when tapped (the name is spoken as its page opens) and, with a mouse,
+// when the pointer rests on a card for a moment. No speaker button on every card.
+let pendingSay = null, hoverSay = 0;
+document.addEventListener('click', e => { const a = e.target.closest('a.card'); if (a?.dataset.n && !matchMedia('(hover: hover) and (pointer: fine)').matches) pendingSay = { n: a.dataset.n, ta: !!a.dataset.nta }; }, true);
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  document.addEventListener('pointerover', e => {
+    const a = e.target.closest('a.card'); if (!a || a.contains(e.relatedTarget)) return;
+    clearTimeout(hoverSay); hoverSay = setTimeout(() => a.matches(':hover') && say(a.dataset.n, null, !!a.dataset.nta), 350);
+  });
+  document.addEventListener('pointerout', e => { const a = e.target.closest('a.card'); if (a && !a.contains(e.relatedTarget)) { clearTimeout(hoverSay); speechSynthesis?.cancel(); } });
+}
+
 // ---------------------------------------------------------------- cards
 const img = (url, alt, lazy = true) => url ? `<img src="${url}" alt="${esc(alt)}"${lazy ? ' loading="lazy"' : ''} decoding="async" onload="this.classList.add('loaded')" onerror="this.remove()">` : '';
 const FORM_KEYS = ['tree', 'shrub', 'vine', 'herb', 'grass', 'fern', 'succulent', 'aquatic', 'moss', 'palm', 'conifer'];
 const formTag = forms => { const f = forms.find(x => FORM_KEYS.includes(x)); return f ? `<span class="tagform"${langAttr()}>${icon('f-' + f)}${esc(gLabel(groupByKey[f]))}</span>` : ''; };
 // Photo with the name (and its speaker) laid over the bottom, Zoorassic Park style.
-const card = ({ h, url, name, sub, forms = [], ta = false }) => `<a class="card" href="${h}" data-n="${esc(name)}">
+const card = ({ h, url, name, sub, forms = [], ta = false }) => `<a class="card" href="${h}" data-n="${esc(name)}"${ta ? ' data-nta="1"' : ''}>
     <div class="card-img">${img(url, name)}${formTag(forms)}</div>
-    <div class="card-meta"><div><div class="name-row"><h3 class="card-name"${ta ? ' lang="ta"' : ''}>${esc(name)}</h3>${sayBtn(name, ta)}</div><div class="card-sub">${esc(sub)}</div></div></div></a>`;
+    <div class="card-meta"><div><div class="name-row"><h3 class="card-name"${ta ? ' lang="ta"' : ''}>${esc(name)}</h3></div><div class="card-sub">${esc(sub)}</div></div></div></a>`;
 const plantCard = p => card({ h: `#/p/${p.key}`, url: photoOf(p), name: nm(p), sub: p.sci, forms: p.forms, ta: isTa() && !!TA_NAMES[p.key] });
 // Growth forms a live species belongs to, by its ancestry.
 const formsOfAnc = anc => GROUPS.filter(g => !['all', 'flower'].includes(g.key) && g.ids.some(id => anc?.includes(id))).map(g => g.key);
@@ -355,6 +367,7 @@ function viewSearchHome() {
   const input = $('#searchInput'); input.value = '';
   app.innerHTML = `<div class="page-head"><h1 class="h-display">${tr('search_title')}</h1><p class="lede">${tr('search_lede')}</p>
     <div class="suggest">${(isTa() ? SUGGEST_TA : SUGGEST).map(s => `<a href="#/search/${encodeURIComponent(s)}">${esc(s)}</a>`).join('')}</div></div>
+    <button class="id-card" type="button" data-identify><span class="id-card-ico">${icon('camera')}</span><span><b>${tr('id_card')}</b><small>${tr('id_card_d')}</small></span>${icon('next')}</button>
     ${shelf(tr('lib_title'), [...PLANTS].sort(byName).map(plantCard).join(''))}`;
   if (matchMedia('(pointer: fine)').matches) input.focus();
   if (!lib) loadLibrary().then(() => { if (location.hash === '#/search') viewSearchHome(); }).catch(() => {});
@@ -917,12 +930,92 @@ function step(dir, dx) {
   setTimeout(go, 170);
 }
 
+
+// ---------------------------------------------------------------- identify a plant from a photo
+// The photo is shrunk on the device, sent to /api/identify (Pl@ntNet, key kept on the server), and each
+// match is tied to a library plant or an iNaturalist species so it opens a Kaadu plant page.
+let idShot = null; // { url, state: 'looking' | 'done' | 'error', matches, error }
+document.addEventListener('click', e => { if (e.target.closest('[data-identify]')) { e.preventDefault(); $('#idFile').value = ''; $('#idFile').click(); } });
+$('#idFile').addEventListener('change', e => { const f = e.target.files?.[0]; if (f) identify(f); });
+async function shrink(file, max = 1280) {
+  try {
+    const bmp = await createImageBitmap(file), k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise(r => c.toBlob(r, 'image/jpeg', .86)) || file;
+  } catch { return file; } // e.g. a format the browser can't draw: send it as it is
+}
+async function matchTaxon(sci) {
+  const two = sci.split(' ').slice(0, 2).join(' ').toLowerCase();
+  const p = PLANTS.find(x => x.sci.toLowerCase() === sci.toLowerCase() || x.sci.toLowerCase().split(' ').slice(0, 2).join(' ') === two);
+  if (p) return { plant: p };
+  try {
+    const r = await api(`/taxa?q=${encodeURIComponent(sci)}&taxon_id=47126&per_page=5&is_active=true${isTa() ? '&locale=ta' : ''}`);
+    const t = r.results.find(x => x.name.toLowerCase() === sci.toLowerCase()) || r.results.find(x => x.name.toLowerCase().startsWith(two)) || null;
+    return t ? (byId[t.id] ? { plant: byId[t.id] } : { taxon: t }) : {};
+  } catch { return {}; }
+}
+async function identify(file) {
+  if (idShot?.url) URL.revokeObjectURL(idShot.url);
+  idShot = { url: URL.createObjectURL(file), state: 'looking' };
+  if (location.hash !== '#/identify') location.hash = '#/identify'; else viewIdentify();
+  try {
+    const fd = new FormData(); fd.append('image', await shrink(file), 'plant.jpg'); fd.append('lang', lang);
+    const r = await fetch('api/identify', { method: 'POST', body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(j.error || 'fail'), { code: j.error });
+    if (!lib) await loadLibrary().catch(() => {});
+    const top = (j.results || []).slice(0, 5);
+    const linked = await Promise.all(top.map(async x => ({ ...x, ...(await matchTaxon(x.sci)) })));
+    const ids = linked.filter(x => x.taxon).map(x => x.taxon.id), ta = isTa() && ids.length ? await taNames(ids) : {};
+    idShot = { ...idShot, state: 'done', matches: linked.map(x => ({ ...x, ta: x.taxon ? ta[x.taxon.id] : null })) };
+  } catch (err) {
+    idShot = { ...idShot, state: 'error', error: err.code === 'not_configured' ? 'id_off' : err.code === 'quota' ? 'id_quota' : 'id_fail' };
+  }
+  if (location.hash === '#/identify') viewIdentify();
+}
+function idMatch(m) {
+  const p = m.plant, t = m.taxon;
+  const name = p ? nm(p) : (isTa() && m.ta) || cap(t?.preferred_common_name || m.common[0] || m.sci);
+  const nameTa = p ? hasTa(p) : isTa() && !!m.ta;
+  const h = p ? `#/p/${p.key}` : t ? `#/t/${t.id}` : `#/search/${encodeURIComponent(m.sci)}`;
+  const photo = p ? photoOf(p) : t?.default_photo?.medium_url;
+  return { name, nameTa, h, photo, sci: m.sci, pct: Math.round(m.score * 100) };
+}
+function viewIdentify() {
+  const s = idShot;
+  const pick = (cls = 'btn accent') => `<button class="${cls}" type="button" data-identify>${icon('camera')}<span>${tr(s ? 'id_again' : 'id_pick')}</span></button>`;
+  const head = `<div class="page-head"><span class="eyebrow">${tr('id_card')}</span><h1 class="h-display">${tr('id_title')}</h1><p class="lede">${tr('id_lede')}</p></div>`;
+  if (!s) {
+    app.innerHTML = `${head}<div class="id-start">${pick()}<p class="note">${icon('leaf')} ${tr('id_tips')}</p><p class="id-privacy">${tr('id_privacy')}</p></div>`;
+    return;
+  }
+  let body = '';
+  if (s.state === 'looking') body = `<div class="id-status" role="status"><div class="spinner"></div><span>${tr('id_looking')}</span></div><div class="skeleton id-skel"></div>`;
+  else if (s.state === 'error') body = `<div class="empty"><b>${tr(s.error)}</b></div>`;
+  else if (!s.matches.length) body = `<div class="empty"><b>${tr('id_none')}</b></div>`;
+  else {
+    const [best, ...rest] = s.matches.map(idMatch);
+    body = `${best.pct < 15 ? `<p class="id-warn" role="status">${tr('id_unsure')}</p>` : ''}
+      <section class="id-best" aria-labelledby="idBest">
+        <span class="eyebrow" id="idBest">${tr('id_best')}</span>
+        <a class="id-best-card" href="${best.h}">${best.photo ? `<img src="${best.photo}" alt="">` : '<span class="id-ph"></span>'}
+          <div><div class="name-row"><h2${best.nameTa ? ' lang="ta"' : ''}>${esc(best.name)}</h2>${sayBtn(best.name, best.nameTa)}</div><p class="sci">${esc(best.sci)}</p>
+            <div class="id-meter" role="img" aria-label="${esc(tr('id_sure', { n: best.pct }))}"><i style="width:${best.pct}%"></i></div><small>${tr('id_sure', { n: best.pct })}</small>
+            <span class="btn accent id-open"${langAttr()}>${esc(tr('id_open', { name: best.name }))} ${icon('arrow')}</span></div></a>
+      </section>
+      ${rest.length ? `<section class="id-rest"><h2 class="h-section">${tr('id_others')}</h2><ul>${rest.map(m => `<li><a href="${m.h}">${m.photo ? `<img src="${m.photo.replace('/medium.', '/square.')}" alt="">` : '<span class="id-ph"></span>'}<span><b${m.nameTa ? ' lang="ta"' : ''}>${esc(m.name)}</b><i>${esc(m.sci)}</i></span><small>${tr('id_sure', { n: m.pct })}</small></a></li>`).join('')}</ul></section>` : ''}`;
+  }
+  app.innerHTML = `${head}<div class="id-layout"><figure class="id-photo"><img src="${s.url}" alt="${tr('id_your')}"><figcaption>${tr('id_your')}</figcaption></figure><div class="id-results">${body}<div class="id-acts">${pick('btn outline')}</div><p class="id-privacy">${tr('id_privacy')}</p></div></div>`;
+}
+
 // ---------------------------------------------------------------- routing
 function setTab(tab) { m3?.setActive?.(tab || null); if (IOS && tab) KolamIOS.tabBar.select(tab); document.querySelectorAll('[data-tab]').forEach(a => a.dataset.tab === tab ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')); }
 function route({ keep = false } = {}) {
   route.current = location.hash || '';
   io?.disconnect(); io = null;
   window.speechSynthesis?.cancel(); clearTimeout(announceTimer); clearTimeout(autoNextTimer);
+  if (pendingSay) { const t = pendingSay; pendingSay = null; setTimeout(() => say(t.n, null, t.ta), 80); }
   let h = location.hash.slice(1) || '/';
   try { h = decodeURIComponent(h); } catch {}
   const [, a, b] = h.split('/');
@@ -936,7 +1029,7 @@ function route({ keep = false } = {}) {
   // The app bar's title and where its Back goes (main tabs have none); plant and branch pages set their own name.
   const game = gameByKey[b];
   const ab = { '': ['Kaadu'], g: [groupByKey[b] ? gLabel(groupByKey[b]) : 'Kaadu', '#/', true], types: [tr('nav_groups')], saved: [tr('my_list')],
-    search: [tr('search_title'), IOS ? null : '#/'], explore: [tr('nav_tree'), b ? '#/explore' : null], game: [game ? tr(game.t) : tr('games_title'), game ? '#/game' : null],
+    search: [tr('search_title'), IOS ? null : '#/'], identify: [tr('id_title'), '#/search'], explore: [tr('nav_tree'), b ? '#/explore' : null], game: [game ? tr(game.t) : tr('games_title'), game ? '#/game' : null],
     p: [byKey[b] ? nm(byKey[b]) : '', lastList, !!(byKey[b] && hasTa(byKey[b]))], t: ['', lastList] }[a || ''] || ['Kaadu'];
   appBar(ab[0], ab[1] || null, ab[2] && isTa());
   document.documentElement.classList.toggle('searching', !!APP && a === 'search');
@@ -951,6 +1044,7 @@ function route({ keep = false } = {}) {
     if (round.done >= ROUND || round.mode !== b) round = { mode: null }; // coming back to a game starts a fresh round
     return { name: viewNameGame, group: viewGroupGame, odd: viewOddGame, find: viewFindGame, memory: viewMemoryGame, fv: viewFvGame }[b]?.() ?? viewGameHub();
   }
+  if (a === 'identify') { setTab('search'); return viewIdentify(); }
   if (a === 'search' && b) { setTab('search'); return viewSearch(h.slice(8)); }
   if (a === 'search') { setTab('search'); return viewSearchHome(); }
   if (a === 'p' && byKey[b]) { setTab(''); return viewDetail({ plant: byKey[b] }); }
@@ -1017,7 +1111,7 @@ if (ANDROID) {
     destinations: [
       { id: 'home', label: tr('nav_home'), icon: 'home', href: '#/' },
       { id: 'explore', label: tr('nav_explore'), icon: 'account_tree', href: '#/explore' },
-      { id: 'game', label: tr('nav_games'), icon: 'auto_awesome', href: '#/game' },
+      { id: 'game', label: tr('nav_games'), icon: 'sports_esports', href: '#/game' },
       { id: 'search', label: tr('nav_search'), icon: 'search', href: '#/search' },
       { id: 'saved', label: tr('my_list'), icon: 'bookmark', href: '#/saved' },
     ],
@@ -1045,7 +1139,7 @@ if (ANDROID) {
 if (IOS) {
   // Navigation bar, tab bar (4 tabs + the trailing Search tab, as in iOS 26), sheets and haptics from the kit.
   const keys = { home: 'nav_home', explore: 'nav_explore', game: 'nav_games', saved: 'my_list', search: 'nav_search' };
-  const ic = { home: 'house', explore: icon('branch', 'ios-icon'), game: 'sparkles', saved: 'bookmark', search: 'magnifyingglass' };
+  const ic = { home: 'house', explore: icon('branch', 'ios-icon'), game: icon('game', 'ios-icon'), saved: 'bookmark', search: 'magnifyingglass' };
   const href = { home: '#/', explore: '#/explore', game: '#/game', saved: '#/saved', search: '#/search' };
   KolamIOS.init({
     appName: 'Kaadu', uaTokens: ['Kaadu-iOS'], tint: { light: '#1D6B45', dark: '#7CC6A3', onDark: '#0E0E0E' },

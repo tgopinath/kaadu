@@ -690,3 +690,58 @@ html.app .page-head .title-row .say-name { display: none; } /* its title moved t
 html.app .pp-row .langswitch { display: inline-flex; }
 .ab-profile .k-icon { width: 24px; height: 24px; }
 html.k-android.searching .top .profile { display: none; } /* the app bar's profile action is the one in the app */
+
+/* ---------- Identify a plant from a photo ---------- */
+.search-cam { flex: none; width: 34px; height: 34px; margin-right: -6px; border-radius: 9px; display: grid; place-items: center; color: var(--ink-2); }
+.search-cam:hover { background: var(--surface-2); color: var(--accent); }
+.search-cam .k-icon { width: 20px; height: 20px; }
+.id-card { width: 100%; max-width: 640px; display: flex; align-items: center; gap: 14px; margin: 0 0 32px; padding: 14px 16px; border-radius: 10px; text-align: left; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.id-card:hover { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.id-card > .k-icon { margin-left: auto; color: var(--ink-2); }
+.id-card-ico { flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
+.id-card-ico .k-icon { width: 24px; height: 24px; }
+.id-card b { display: block; font-size: 16px; }
+.id-card small { color: var(--ink-2); font-size: 14px; }
+.id-start { display: grid; gap: 14px; justify-items: start; max-width: 560px; }
+.id-start .btn, .id-acts .btn { height: 52px; padding: 0 22px; font-size: 17px; }
+.btn.accent { background: var(--accent); color: var(--accent-ink); }
+.id-start .note { display: flex; gap: 8px; align-items: flex-start; }
+.id-start .note .k-icon { width: 18px; height: 18px; color: var(--accent); margin-top: 2px; }
+.id-privacy { font-size: 13px; color: var(--ink-3); max-width: 60ch; margin: 14px 0 0; }
+.id-layout { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 860px) { .id-layout { grid-template-columns: minmax(260px, 420px) minmax(0, 1fr); } .id-photo { position: sticky; top: calc(var(--top-h) + 16px); } }
+.id-photo { margin: 0; border-radius: 8px; overflow: hidden; background: var(--surface-2); position: relative; }
+.id-photo img { width: 100%; max-height: 70svh; object-fit: cover; }
+.id-photo figcaption { position: absolute; left: 10px; top: 10px; padding: 3px 8px; border-radius: 6px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 600; }
+.id-status { display: flex; align-items: center; gap: 12px; font-weight: 600; color: var(--ink-2); }
+.id-skel { height: 180px; border-radius: 10px; margin-top: 16px; }
+.id-warn { margin: 0 0 14px; padding: 12px 14px; border-radius: 8px; background: color-mix(in srgb, #E0A866 14%, var(--surface)); color: var(--ink); font-size: 15px; }
+.id-best-card { display: grid; grid-template-columns: 140px 1fr; gap: 16px; margin-top: 8px; padding: 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.id-best-card:hover { border-color: var(--ink-3); }
+.id-best-card img, .id-best-card .id-ph { width: 140px; height: 140px; border-radius: 8px; object-fit: cover; background: var(--surface-2); }
+.id-best-card h2 { margin: 0; font: 800 26px/1.15 var(--sans); letter-spacing: -.02em; }
+.id-best-card h2:lang(ta) { font-size: 22px; line-height: 1.35; letter-spacing: 0; }
+.id-best-card .sci { margin: 2px 0 10px; color: var(--ink-2); }
+.id-meter { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; max-width: 260px; }
+.id-meter i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.id-best-card small { display: block; margin-top: 4px; color: var(--ink-2); font-size: 13px; }
+.id-open { margin-top: 14px; pointer-events: none; }
+@media (max-width: 520px) { .id-best-card { grid-template-columns: 1fr; } .id-best-card img, .id-best-card .id-ph { width: 100%; height: 200px; } }
+.id-rest { margin-top: 26px; }
+.id-rest ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.id-rest a { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 8px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
+.id-rest a:hover { border-color: var(--ink-3); }
+.id-rest img, .id-rest .id-ph { flex: none; width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--surface-2); }
+.id-rest span { display: grid; min-width: 0; }
+.id-rest b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.id-rest i { font-size: 13px; color: var(--ink-3); }
+.id-rest small { margin-left: auto; flex: none; font-weight: 600; color: var(--accent); }
+.id-acts { margin-top: 22px; }
+
+/* Games button: a game-controller icon on a still green-to-blue gradient (no spinning ring, which read as "loading") */
+.topnav a.magic, .tabbar a.magic .magic-orb, .magic .k-icon { animation: none !important; }
+.topnav a.magic { background: linear-gradient(#141414, #141414) padding-box, linear-gradient(120deg, #7CC6A3, #4A7DF0) border-box; box-shadow: 0 0 16px -6px rgba(124,198,163,.7); }
+.topnav a.magic:hover { background: linear-gradient(#202020, #202020) padding-box, linear-gradient(120deg, #7CC6A3, #4A7DF0) border-box; box-shadow: 0 0 20px -4px rgba(124,198,163,.8); }
+.topnav a.magic .k-icon { width: 18px; height: 18px; color: var(--accent); }
+.tabbar a.magic .magic-orb { background: linear-gradient(135deg, #7CC6A3, #4A7DF0); box-shadow: 0 0 0 4px var(--bg), 0 6px 18px -6px rgba(74,125,240,.8); }
+.tabbar a.magic .magic-orb .k-icon { width: 24px; height: 24px; color: #fff; filter: none; }
